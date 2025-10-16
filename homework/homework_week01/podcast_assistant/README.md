@@ -78,19 +78,19 @@ The `ra` command accepts the following parameters:
 #### Text Search Examples
 ```bash
 # Text search with verbose output
-uv run ra "What's the first episode in the results for 'how do I make money with AI?'" 3000 0.25 --verbose
+uv run ra "What's the first episode in the results for 'how do I make money with AI?'" --verbose
 ```
 
 #### Vector Search Examples
 ```bash
 # Vector search with default model (all-MiniLM-L6-v2)
-uv run ra "What's the first episode in the results for 'how do I make money with AI?'" 2000 0.5 --search-type vector_sentence_transformers
+uv run ra "What's the first episode in the results for 'how do I make money with AI?'" --search-type vector_sentence_transformers
 
 # Vector search with higher quality model
-uv run ra "What's the first episode in the results for 'how do I make money with AI?'" 3000 0.25 --search-type vector_sentence_transformers --model all-mpnet-base-v2
+uv run ra "What's the first episode in the results for 'how do I make money with AI?'" --search-type vector_sentence_transformers --model all-mpnet-base-v2
 
 # Multilingual vector search
-uv run ra "Cuál es el primer episodio que responde a la pregunta 'How do I make money with AI?'"" 2000 0.5 --search-type vector_sentence_transformers --model paraphrase-multilingual-MiniLM-L12-v2
+uv run ra "Cuál es el primer episodio que responde a la pregunta 'How do I make money with AI?'" 2000 0.5 --search-type vector_sentence_transformers --model paraphrase-multilingual-MiniLM-L12-v2
 ```
 
 #### Chunking Strategy Examples
@@ -111,16 +111,16 @@ uv run ra "Quick overview" 2000 0.0
 #### File Type Filtering Examples
 ```bash
 # Only Python files
-uv run ra "How does the code work?" 2000 0.5 --extensions "py"
+uv run ra "How does the code work?" --extensions "py"
 
 # Python and Markdown files
-uv run ra "What is this project?" 2000 0.5 --extensions "py,md"
+uv run ra "What is this project?" --extensions "py,md"
 
 # Multiple file types
-uv run ra "Documentation and code" 2000 0.5 --extensions "py,md,txt,json"
+uv run ra "Documentation and code" --extensions "py,md,txt,json"
 
 # Only documentation
-uv run ra "How to use this?" 2000 0.5 --extensions "md,mdx"
+uv run ra "How to use this?" --extensions "md,mdx"
 ```
 
 ## License
