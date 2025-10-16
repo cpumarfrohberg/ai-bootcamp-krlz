@@ -21,14 +21,15 @@ A RAG (Retrieval-Augmented Generation) powered assistant for podcast content ana
 ## Run cli in container
 
 ```bash
-# Run Docker in one terminal session
+# 1. Run Docker in one terminal session
 docker compose up --build
 
-# Wait until you read "Attaching to podcast-assistant-cli, podcast-assistant-redis"), then run cli in a separate terminal (see below for more run commands)
+# 2. Wait until you read "podcast-assistant-redis  | 1:M 16 Oct 2025 21:03:27.285 * Ready to accept connections tcp", then run cli in a separate terminal (see below for more run commands)
 uv run ra --help
 
-# Stop by pressing `control + c`
-# Remove clutter 
+# 3. Stop by pressing `control + c`
+
+# 4. Remove clutter 
 docker compose down 
 ```
 
