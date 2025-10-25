@@ -2,9 +2,8 @@
 from typing import Any, Dict, List
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
-
 from config import PodcastConstants
+from sentence_transformers import SentenceTransformer
 
 
 class VectorIndex:

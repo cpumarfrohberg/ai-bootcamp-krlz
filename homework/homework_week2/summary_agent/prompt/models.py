@@ -2,9 +2,8 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
 from config import PodcastConstants
+from pydantic import BaseModel, Field
 
 
 class SearchResult(BaseModel):
