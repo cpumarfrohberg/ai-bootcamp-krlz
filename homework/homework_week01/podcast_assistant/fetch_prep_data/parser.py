@@ -5,8 +5,8 @@ from typing import Any, Dict, List, NamedTuple
 
 import frontmatter
 import yaml
-
 from config import FileProcessingConfig, GitHubConfig, PodcastConstants
+
 from fetch_prep_data.reader import RawRepositoryFile
 
 MAX_DEPTH = 10

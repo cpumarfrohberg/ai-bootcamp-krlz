@@ -1,7 +1,6 @@
 # CLI for Podcast Assistant using GitHub repository RAG
 
 import typer
-
 from config import (
     ChunkingConfig,
     RepositoryConfig,

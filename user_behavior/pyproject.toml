@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "user_behavior"
+version = "0.1.0"
+description = "discover patterns in user behavior"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pymongo>=4.0.0",
+    "typer>=0.9.0",
+    "sentence-transformers>=2.2.0",
+    "numpy>=1.24.0",
+    "ollama>=0.1.0",
+    "pydantic>=2.0.0",
+    "pydantic-ai>=0.0.12",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "streamlit>=1.28.0",
+    "redis>=4.5.0",
+    "kuzu>=0.0.7",
+    "pandas>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "minsearch>=0.0.7",
+]
+
+[project.scripts]
+ask = "cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fetch_prep_data", "config"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.6.0",
+    "pre-commit>=3.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "api: marks tests that make real API calls",
+    "integration: marks integration tests"
+]
+
+[tool.ruff]
+# Disable F401 (unused imports) for __init__.py files since they often re-export
+[tool.ruff.lint]
+ignore = ["F401"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]

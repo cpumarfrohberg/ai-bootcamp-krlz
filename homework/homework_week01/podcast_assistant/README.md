@@ -29,8 +29,8 @@ uv run ra --help
 
 # 3. Stop by pressing `control + c`
 
-# 4. Remove clutter 
-docker compose down 
+# 4. Remove clutter
+docker compose down
 ```
 
 ## Configuration

@@ -1,9 +1,6 @@
 # Text-based RAG implementation for GitHub repository analysis
 from typing import Callable, List
 
-from minsearch import Index
-from sentence_transformers import SentenceTransformer
-
 from config import (
     InstructionType,
     SearchType,
@@ -12,9 +9,11 @@ from config import (
 )
 from fetch_prep_data.parser import parse_data
 from fetch_prep_data.reader import read_github_data
+from minsearch import Index
 from prompt.chunking_utils import chunk_documents
 from prompt.llm_utils import query_with_context
 from prompt.vector_search import create_vector_index
+from sentence_transformers import SentenceTransformer
 
 
 class TextRAG:

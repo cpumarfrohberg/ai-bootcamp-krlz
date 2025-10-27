@@ -2,13 +2,12 @@
 import re
 from typing import Any, Dict, List
 
-from openai import OpenAI
-
 from config import (
     InstructionType,
     ModelType,
     PodcastConstants,
 )
+from openai import OpenAI
 
 from .models import RAGAnswer
 from .prompt_builder import build_prompt

@@ -6,9 +6,8 @@ from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 import requests
-from pydantic import BaseModel, Field, HttpUrl, ValidationError
-
 from config import FileProcessingConfig, GitHubConfig, RepositoryConfig
+from pydantic import BaseModel, Field, HttpUrl, ValidationError
 
 
 @dataclass
