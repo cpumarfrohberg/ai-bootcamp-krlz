@@ -1,19 +1,11 @@
 import pytest
 
+from wikiagent.config import (
+    MIN_GET_PAGE_CALLS,
+    MIN_SEARCH_CALLS,
+    TEST_QUESTIONS,
+)
 from wikiagent.wikipagent import query_wikipedia
-
-TEST_QUESTIONS = [
-    "What factors influence customer behavior?",
-    "How do users behave on websites?",
-    "What is customer satisfaction?",
-    "What are user behavior patterns?",
-]
-
-# Minimum expected tool calls based on agent instructions
-# Phase 1: 3-5 broad searches, Phase 2: 8-12 specific searches
-# Total: ~11-17 searches expected
-MIN_SEARCH_CALLS = 3  # At least 3 searches (minimum from Phase 1)
-MIN_GET_PAGE_CALLS = 2  # At least 2 page retrievals (multiple pages expected)
 
 
 @pytest.fixture

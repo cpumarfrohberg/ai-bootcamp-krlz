@@ -6,6 +6,7 @@ from urllib.parse import quote
 
 import requests
 
+from wikiagent.config import USER_AGENT
 from wikiagent.models import WikipediaPageContent, WikipediaSearchResult
 
 
@@ -33,7 +34,8 @@ def wikipedia_search(query: str) -> List[WikipediaSearchResult]:
 
         url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch={search_query}"
 
-        response = requests.get(url, timeout=10)
+        headers = {"User-Agent": USER_AGENT}
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # Raise exception for bad status codes
 
         data = response.json()
@@ -85,7 +87,8 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
 
         url = f"https://en.wikipedia.org/w/index.php?title={encoded_title}&action=raw"
 
-        response = requests.get(url, timeout=10)
+        headers = {"User-Agent": USER_AGENT}
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
 
         content = response.text

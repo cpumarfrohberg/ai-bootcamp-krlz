@@ -3,19 +3,17 @@
 import pytest
 
 from evals.judge import evaluate_answer
-from wikiagent.models import RAGAnswer
-
-TEST_QUESTION = "What factors influence customer behavior?"
-TEST_ANSWER = "Customer behavior is influenced by multiple factors including psychological factors (motivation, perception), social factors (family, culture), personal factors (age, lifestyle), and marketing factors (product, price, promotion, place)."
-TEST_CONFIDENCE = 0.95
-TEST_SOURCES = ["Consumer behaviour", "Behavioral economics"]
-TEST_REASONING = (
-    "Found relevant Wikipedia pages on factors influencing customer behavior"
+from wikiagent.config import (
+    MAX_SCORE,
+    MIN_REASONING_LENGTH,
+    MIN_SCORE,
+    TEST_ANSWER,
+    TEST_CONFIDENCE,
+    TEST_QUESTION,
+    TEST_REASONING,
+    TEST_SOURCES,
 )
-
-MIN_SCORE = 0.0
-MAX_SCORE = 1.0
-MIN_REASONING_LENGTH = 1
+from wikiagent.models import RAGAnswer
 
 
 @pytest.fixture
