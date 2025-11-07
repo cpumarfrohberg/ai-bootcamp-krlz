@@ -1,12 +1,9 @@
 # Pydantic models for RAG Agent
-"""Pydantic models for pydantic-ai-based RAG system"""
 
 from pydantic import BaseModel, Field
 
 
 class SearchResult(BaseModel):
-    """Individual search result with metadata for structured output"""
-
     content: str = Field(..., description="The content/text of the search result")
     filename: str | None = Field(None, description="Filename or source identifier")
     title: str | None = Field(None, description="Title of the document")
@@ -20,8 +17,6 @@ class SearchResult(BaseModel):
 
 
 class RAGAnswer(BaseModel):
-    """Structured response from RAG system"""
-
     answer: str = Field(..., description="The answer to the user's question")
     confidence: float = Field(
         ..., ge=0.0, le=1.0, description="Confidence in the answer (0.0 to 1.0)"
@@ -34,4 +29,15 @@ class RAGAnswer(BaseModel):
     )
 
 
-__all__ = ["RAGAnswer", "SearchResult"]
+class WikipediaSearchResult(BaseModel):
+    title: str = Field(..., description="Wikipedia page title")
+    snippet: str | None = Field(None, description="Text snippet from the page")
+    page_id: int | None = Field(None, description="Wikipedia page ID")
+    size: int | None = Field(None, description="Page size in bytes")
+    word_count: int | None = Field(None, description="Word count of the page")
+
+
+class WikipediaPageContent(BaseModel):
+    title: str = Field(..., description="Wikipedia page title")
+    content: str = Field(..., description="Raw wikitext content")
+    url: str | None = Field(None, description="Full Wikipedia URL")

@@ -1,11 +1,25 @@
 """Tests for RAG Agent tools"""
 
 import pytest
+import requests
 
 from config import SearchType
-from rag_agent.models import SearchResult
-from rag_agent.tools import initialize_search_index, search_documents
+from rag_agent.models import SearchResult, WikipediaPageContent, WikipediaSearchResult
+from rag_agent.tools import (
+    initialize_search_index,
+    search_documents,
+    wikipedia_get_page,
+    wikipedia_search,
+)
 from search.search_utils import SearchIndex
+
+TEST_PAGE_TITLE = "Capybara"
+TEST_PAGE_SNIPPET = "The capybara is the largest rodent..."
+TEST_PAGE_CONTENT = "{{Infobox mammal\n| name = Capybara\n}}\nThe '''capybara'''..."
+TEST_PAGE_ID = 12345
+TEST_PAGE_SIZE = 50000
+TEST_PAGE_WORD_COUNT = 2000
+TEST_SEARCH_QUERY = "capybara"
 
 
 @pytest.fixture
@@ -13,7 +27,6 @@ def mock_search_index():
     """Create a mock search index with sample documents"""
     index = SearchIndex(search_type=SearchType.MINSEARCH)
 
-    # Add sample documents
     # Note: tags must be a string for MinSearch (not a list)
     sample_docs = [
         {
@@ -107,3 +120,71 @@ def test_search_documents_result_structure(mock_search_index):
         assert result.content is not None
         assert isinstance(result.content, str)
         assert len(result.content) > 0
+
+
+def test_wikipedia_search_success(mocker):
+    """Test wikipedia_search returns results on successful API call"""
+    mock_get = mocker.patch("rag_agent.tools.requests.get")
+    mock_response = mocker.Mock()
+    mock_response.json.return_value = {
+        "query": {
+            "search": [
+                {
+                    "title": TEST_PAGE_TITLE,
+                    "snippet": TEST_PAGE_SNIPPET,
+                    "pageid": TEST_PAGE_ID,
+                    "size": TEST_PAGE_SIZE,
+                    "wordcount": TEST_PAGE_WORD_COUNT,
+                }
+            ]
+        }
+    }
+    mock_response.raise_for_status.return_value = None
+    mock_get.return_value = mock_response
+
+    results = wikipedia_search(TEST_SEARCH_QUERY)
+
+    assert len(results) == 1
+    assert isinstance(results[0], WikipediaSearchResult)
+    assert results[0].title == TEST_PAGE_TITLE
+    assert results[0].snippet == TEST_PAGE_SNIPPET
+    assert results[0].page_id == TEST_PAGE_ID
+    assert results[0].size == TEST_PAGE_SIZE
+    assert results[0].word_count == TEST_PAGE_WORD_COUNT
+
+
+def test_wikipedia_search_handles_network_error(mocker):
+    """Test wikipedia_search handles network errors"""
+    mock_get = mocker.patch("rag_agent.tools.requests.get")
+    mock_get.side_effect = requests.RequestException("Network error")
+
+    with pytest.raises(RuntimeError, match="Failed to search Wikipedia"):
+        wikipedia_search(TEST_SEARCH_QUERY)
+
+
+def test_wikipedia_get_page_success(mocker):
+    """Test wikipedia_get_page returns page content on successful API call"""
+    mock_get = mocker.patch("rag_agent.tools.requests.get")
+    mock_response = mocker.Mock()
+    mock_response.text = TEST_PAGE_CONTENT
+    mock_response.raise_for_status.return_value = None
+    mock_get.return_value = mock_response
+
+    result = wikipedia_get_page(TEST_PAGE_TITLE)
+
+    assert isinstance(result, WikipediaPageContent)
+    assert result.title == TEST_PAGE_TITLE
+    assert result.content == TEST_PAGE_CONTENT
+    assert (
+        result.url
+        == f"https://en.wikipedia.org/wiki/{TEST_PAGE_TITLE.replace(' ', '_')}"
+    )
+
+
+def test_wikipedia_get_page_handles_network_error(mocker):
+    """Test wikipedia_get_page handles network errors"""
+    mock_get = mocker.patch("rag_agent.tools.requests.get")
+    mock_get.side_effect = requests.RequestException("Network error")
+
+    with pytest.raises(RuntimeError, match="Failed to get Wikipedia page"):
+        wikipedia_get_page(TEST_PAGE_TITLE)
