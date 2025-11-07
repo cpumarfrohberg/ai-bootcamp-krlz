@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 import requests
 
-from wikiagent.config import USER_AGENT
+from wikiagent.config import MAX_PAGE_CONTENT_LENGTH, USER_AGENT
 from wikiagent.models import WikipediaPageContent, WikipediaSearchResult
 
 
@@ -92,6 +92,13 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
         response.raise_for_status()
 
         content = response.text
+
+        # Truncate content to prevent context overflow
+        # Keep the beginning of the page which usually contains the most relevant information
+        if len(content) > MAX_PAGE_CONTENT_LENGTH:
+            content = content[:MAX_PAGE_CONTENT_LENGTH]
+            # Add truncation indicator
+            content += f"\n\n[Content truncated to {MAX_PAGE_CONTENT_LENGTH} characters. Full page available at: https://en.wikipedia.org/wiki/{page_title}]"
 
         wikipedia_url = f"https://en.wikipedia.org/wiki/{page_title}"
 

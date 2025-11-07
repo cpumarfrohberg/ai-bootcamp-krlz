@@ -17,6 +17,12 @@ from config import (
 # User-Agent header required by Wikipedia API
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
 
+# Maximum page content length to prevent context overflow
+# Truncate Wikipedia page content to this length (characters)
+# With ~4 chars per token, 15000 chars ≈ 3750 tokens per page
+# With 15-20 pages, this keeps us under 128k token limit
+MAX_PAGE_CONTENT_LENGTH = 15000  # characters
+
 # Test constants for agent tests
 # Using simpler, more direct questions for better testing
 TEST_QUESTIONS = [

@@ -106,6 +106,7 @@ async def query_wikipedia(
         instructions=instructions,
         output_type=RAGAnswer,
         model_settings=ModelSettings(max_tokens=DEFAULT_MAX_TOKENS),
+        end_strategy="exhaustive",
     )
 
     logger.info(f"Running Wikipedia agent query: {question[:100]}...")
