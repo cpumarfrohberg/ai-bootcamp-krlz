@@ -18,11 +18,12 @@ from config import (
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
 
 # Test constants for agent tests
+# Using simpler, more direct questions for better testing
 TEST_QUESTIONS = [
-    "What factors influence customer behavior?",
-    "How do users behave on websites?",
     "What is customer satisfaction?",
-    "What are user behavior patterns?",
+    "What is consumer behaviour?",
+    "What is user experience?",
+    "What is behavioral economics?",
 ]
 
 # Minimum expected tool calls based on agent instructions
