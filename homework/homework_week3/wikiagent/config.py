@@ -52,7 +52,7 @@ class RAGConfig:
 
     search_type: SearchType = SearchType.SENTENCE_TRANSFORMERS
     openai_model: str = OPENAI_RAG_MODEL  # OpenAI model name (e.g., "gpt-4o-mini")
-    instruction_type: InstructionType = InstructionType.RAG_AGENT
+    instruction_type: InstructionType = InstructionType.WIKIPEDIA_AGENT
     chunk_size: int = DEFAULT_CHUNK_SIZE
     chunk_overlap: int = DEFAULT_CHUNK_OVERLAP
     max_context_length: int = DEFAULT_MAX_CONTEXT_LENGTH
