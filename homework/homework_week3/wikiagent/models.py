@@ -41,3 +41,28 @@ class WikipediaPageContent(BaseModel):
     title: str = Field(..., description="Wikipedia page title")
     content: str = Field(..., description="Raw wikitext content")
     url: str | None = Field(None, description="Full Wikipedia URL")
+
+
+class WikipediaAgentResponse(BaseModel):
+    answer: RAGAnswer = Field(..., description="The structured answer")
+    tool_calls: list[dict] = Field(
+        ..., description="List of tool calls made during query"
+    )
+
+
+class JudgeEvaluation(BaseModel):
+    """Judge evaluation output for answer quality assessment"""
+
+    overall_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Overall quality score (0.0 to 1.0)"
+    )
+    accuracy: float = Field(
+        ..., ge=0.0, le=1.0, description="Factual correctness score (0.0 to 1.0)"
+    )
+    completeness: float = Field(
+        ..., ge=0.0, le=1.0, description="Answer thoroughness score (0.0 to 1.0)"
+    )
+    relevance: float = Field(
+        ..., ge=0.0, le=1.0, description="Answer relevance to question (0.0 to 1.0)"
+    )
+    reasoning: str = Field(..., description="Brief explanation of the evaluation")
