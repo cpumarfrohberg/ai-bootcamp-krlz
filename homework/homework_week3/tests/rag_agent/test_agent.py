@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 
 from wikiagent.config import (
     MIN_GET_PAGE_CALLS,
@@ -8,11 +9,11 @@ from wikiagent.config import (
 from wikiagent.wikipagent import query_wikipedia
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(params=TEST_QUESTIONS)
 @pytest.mark.timeout(120)
-@pytest.mark.parametrize("question", TEST_QUESTIONS)
-async def agent_result(question):
+async def agent_result(request):
     """Run Wikipedia agent query and return result for parametrized questions"""
+    question = request.param
     return await query_wikipedia(question)
 
 

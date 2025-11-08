@@ -78,9 +78,7 @@ class DataType(StrEnum):
 
 
 DEFAULT_RAG_MODEL = TokenizerModel.GPT_4O_MINI
-DEFAULT_JUDGE_MODEL = (
-    TokenizerModel.GPT_4O_MINI
-)  # Using gpt-4o-mini for Judge (consistent validation, supports tools)
+DEFAULT_JUDGE_MODEL = TokenizerModel.GPT_4O  # Using gpt-4o for Judge (more capable than agent model, avoids self-consistency bias)
 DEFAULT_SEARCH_TYPE = (
     SearchType.MINSEARCH
 )  # Better performance, faster, and more efficient per evaluation results
