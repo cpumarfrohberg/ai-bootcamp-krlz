@@ -482,3 +482,82 @@ Update instructions to clarify:
 - **Search strategy**: Do 11-17 searches total (3-5 broad + 8-12 specific)
 - **Retrieval strategy**: Retrieve only the 5-10 most relevant pages, not all pages from search results
 - **Balance**: Prioritize doing more searches over retrieving more pages
+
+---
+
+## What Does the Judge Evaluate?
+
+### Overview
+
+The **LLM-as-a-Judge** evaluates the **quality of an answer** produced by the Wikipedia agent. It does NOT answer the question itself — it evaluates how good the agent's answer is.
+
+### What the Judge Receives (Inputs)
+
+The judge receives four pieces of information:
+
+1. **Question** — The original question asked (e.g., "What factors influence customer behavior?")
+2. **Answer** — The agent's answer text (from `SearchAgentAnswer.answer`)
+3. **Sources** — Wikipedia pages the agent used (from `SearchAgentAnswer.sources_used`)
+4. **Tool Calls** (optional) — The agent's search/retrieval history for context
+
+### What the Judge Evaluates (Outputs)
+
+The judge scores the answer on **three dimensions**:
+
+1. **Accuracy** (0.0 to 1.0)
+   - Is the information factually correct?
+   - Does it align with Wikipedia content?
+   - Are there hallucinations or errors?
+
+2. **Completeness** (0.0 to 1.0)
+   - Does it cover all key aspects of the question?
+   - Are important points missing?
+   - Is the answer comprehensive enough?
+
+3. **Relevance** (0.0 to 1.0)
+   - Does it directly address the question?
+   - Is the information relevant to what was asked?
+   - Are sources appropriate for the question?
+
+4. **Overall Score** (0.0 to 1.0)
+   - Weighted average: `(accuracy * 0.4) + (completeness * 0.3) + (relevance * 0.3)`
+   - Reflects overall answer quality
+
+### Example Flow
+
+```python
+# 1. Agent answers a question
+question = "What factors influence customer behavior?"
+agent_result = await query_wikipedia(question)
+# agent_result.answer.answer = "Customer behavior is influenced by..."
+
+# 2. Judge evaluates the agent's answer
+judge_result = await evaluate_answer(
+    question=question,                    # Original question
+    answer=agent_result.answer,           # Agent's answer
+    tool_calls=agent_result.tool_calls   # Agent's search history
+)
+
+# 3. Judge returns scores
+judge_result.evaluation.overall_score  # e.g., 0.85
+judge_result.evaluation.accuracy        # e.g., 0.90
+judge_result.evaluation.completeness   # e.g., 0.80
+judge_result.evaluation.relevance      # e.g., 0.90
+judge_result.evaluation.reasoning     # "Answer is factually accurate..."
+```
+
+### In the Test (`test_judge.py`)
+
+The test uses:
+- **Question**: "What factors influence customer behavior?" (from `TEST_QUESTION`)
+- **Answer**: Pre-built `SearchAgentAnswer` with a test answer (from `TEST_ANSWER`)
+- **The judge evaluates**: Whether that answer is accurate, complete, and relevant
+
+**Important**: The judge does NOT answer the question — it evaluates the quality of the agent's answer.
+
+### Judge vs. Agent
+
+- **Agent**: Answers questions using Wikipedia
+- **Judge**: Evaluates how good the agent's answer is
+
+The judge is like a teacher grading a student's essay — it doesn't write the essay, it evaluates it.
