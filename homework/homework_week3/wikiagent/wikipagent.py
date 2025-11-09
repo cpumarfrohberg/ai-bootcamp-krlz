@@ -7,7 +7,8 @@ from typing import Any, List
 from pydantic_ai import Agent
 from pydantic_ai.messages import FunctionToolCallEvent
 
-from config import DEFAULT_MAX_TOKENS, OPENAI_RAG_MODEL
+from config import DEFAULT_MAX_TOKENS, DEFAULT_SEARCH_MODE, OPENAI_RAG_MODEL, SearchMode
+from config.adaptive_instructions import get_wikipedia_agent_instructions
 from config.instructions import InstructionsConfig, InstructionType
 from wikiagent.models import RAGAnswer, WikipediaAgentResponse
 
@@ -60,7 +61,9 @@ async def track_tool_calls(ctx: Any, event: Any) -> None:
 
 
 async def query_wikipedia(
-    question: str, openai_model: str = OPENAI_RAG_MODEL
+    question: str,
+    openai_model: str = OPENAI_RAG_MODEL,
+    search_mode: SearchMode = DEFAULT_SEARCH_MODE,
 ) -> WikipediaAgentResponse:
     """
     Query Wikipedia using the agent with search and get_page tools.
@@ -73,6 +76,8 @@ async def query_wikipedia(
     Args:
         question: User question to answer
         openai_model: OpenAI model name (default: from config)
+        search_mode: Search mode (EVALUATION, PRODUCTION, or RESEARCH)
+                     Default: EVALUATION (strict minimums for consistent testing)
 
     Returns:
         WikipediaAgentResponse with answer and tool calls
@@ -81,8 +86,8 @@ async def query_wikipedia(
     global _tool_calls
     _tool_calls = []
 
-    # Get instructions for Wikipedia agent
-    instructions = InstructionsConfig.INSTRUCTIONS[InstructionType.WIKIPEDIA_AGENT]
+    # Get instructions for Wikipedia agent (adaptive based on search_mode)
+    instructions = get_wikipedia_agent_instructions(search_mode)
 
     # Initialize OpenAI model
     from pydantic_ai.models.openai import OpenAIChatModel
@@ -92,7 +97,7 @@ async def query_wikipedia(
         model_name=openai_model,
         provider=OpenAIProvider(),
     )
-    logger.info(f"Using OpenAI model: {openai_model}")
+    logger.info(f"Using OpenAI model: {openai_model}, search mode: {search_mode}")
 
     # Create agent with Wikipedia tools
     from pydantic_ai import ModelSettings

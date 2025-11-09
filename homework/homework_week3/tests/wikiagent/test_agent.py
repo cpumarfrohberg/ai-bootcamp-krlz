@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 
+from config import SearchMode
 from wikiagent.config import (
     MIN_GET_PAGE_CALLS,
     MIN_SEARCH_CALLS,
@@ -14,14 +15,14 @@ from wikiagent.wikipagent import query_wikipedia
 async def agent_result(request):
     """Run Wikipedia agent query and return result for parametrized questions"""
     question = request.param
-    return await query_wikipedia(question)
+    return await query_wikipedia(question, search_mode=SearchMode.EVALUATION)
 
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("question", TEST_QUESTIONS)
 async def test_agent_handles_different_questions(question):
-    result = await query_wikipedia(question)
+    result = await query_wikipedia(question, search_mode=SearchMode.EVALUATION)
 
     # Verify basic structure
     assert result.answer is not None

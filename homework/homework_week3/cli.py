@@ -9,17 +9,34 @@ app = typer.Typer()
 def wikipedia_ask(
     question: str = typer.Argument(..., help="Question to ask the Wikipedia agent"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show tool calls"),
+    mode: str = typer.Option(
+        "evaluation",
+        "--mode",
+        "-m",
+        help="Search mode: evaluation (strict minimums), production (adaptive), or research (comprehensive)",
+    ),
 ):
     import asyncio
 
+    from config import SearchMode
     from wikiagent.wikipagent import query_wikipedia
 
     try:
+        # Convert mode string to SearchMode enum
+        try:
+            search_mode = SearchMode(mode.lower())
+        except ValueError:
+            typer.echo(
+                f"❌ Invalid mode: {mode}. Must be one of: evaluation, production, research",
+                err=True,
+            )
+            raise typer.Exit(1)
+
         typer.echo("🤖 Wikipedia Agent is processing your question...")
 
         async def run_query():
             try:
-                result = await query_wikipedia(question)
+                result = await query_wikipedia(question, search_mode=search_mode)
             except Exception as e:
                 typer.echo(f"❌ Error during agent query: {str(e)}", err=True)
                 if verbose:
@@ -63,6 +80,7 @@ def judge(
     """Evaluate an answer from the Wikipedia agent using LLM-as-a-Judge"""
     import asyncio
 
+    from config import SearchMode
     from evals.judge import evaluate_answer
     from wikiagent.wikipagent import query_wikipedia
 
@@ -71,8 +89,10 @@ def judge(
 
         async def run_evaluation():
             try:
-                # First, get answer from agent
-                agent_result = await query_wikipedia(question)
+                # First, get answer from agent (use evaluation mode for judge)
+                agent_result = await query_wikipedia(
+                    question, search_mode=SearchMode.EVALUATION
+                )
             except Exception as e:
                 typer.echo(f"❌ Error during agent query: {str(e)}", err=True)
                 if verbose:
@@ -93,7 +113,11 @@ def judge(
             # Now evaluate with judge
             try:
                 typer.echo("\n⚖️  Judge is evaluating the answer...")
-                evaluation = await evaluate_answer(question, agent_result.answer)
+                evaluation, judge_usage = await evaluate_answer(
+                    question,
+                    agent_result.answer,
+                    tool_calls=agent_result.tool_calls,  # Pass tool calls for context
+                )
             except Exception as e:
                 typer.echo(f"❌ Error during judge evaluation: {str(e)}", err=True)
                 if verbose:
@@ -111,6 +135,10 @@ def judge(
 
             if verbose:
                 typer.echo(f"\n💭 Judge Reasoning: {evaluation.reasoning}")
+                typer.echo("\n📊 Judge Token Usage:")
+                typer.echo(f"  Input tokens: {judge_usage['input_tokens']}")
+                typer.echo(f"  Output tokens: {judge_usage['output_tokens']}")
+                typer.echo(f"  Total tokens: {judge_usage['total_tokens']}")
 
         asyncio.run(run_evaluation())
 

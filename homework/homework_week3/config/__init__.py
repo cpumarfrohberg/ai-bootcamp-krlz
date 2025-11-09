@@ -77,6 +77,20 @@ class DataType(StrEnum):
     RAG_INDEX = "rag_index"
 
 
+class SearchMode(StrEnum):
+    """Search strategy modes for Wikipedia agent"""
+
+    EVALUATION = (
+        "evaluation"  # Strict minimums, no early stopping (for consistent testing)
+    )
+    PRODUCTION = (
+        "production"  # Adaptive early stopping after minimum (for user queries)
+    )
+    RESEARCH = (
+        "research"  # Maximum searches, no early stopping (for comprehensive research)
+    )
+
+
 DEFAULT_RAG_MODEL = TokenizerModel.GPT_4O_MINI
 DEFAULT_JUDGE_MODEL = TokenizerModel.GPT_4O  # Using gpt-4o for Judge (more capable than agent model, avoids self-consistency bias)
 DEFAULT_SEARCH_TYPE = (
@@ -124,23 +138,19 @@ DEFAULT_SEARCH_TEXT_FIELDS = ["content", "title", "source"]
 DEFAULT_CHUNK_TITLE = "Untitled"
 DEFAULT_CHUNK_SOURCE = "Unknown"
 
-# Grid search default ranges
-DEFAULT_GRID_SEARCH_CHUNK_SIZES = [200, 300, 500, 1000]
-DEFAULT_GRID_SEARCH_OVERLAPS = [0, 15, 50, 100]
-DEFAULT_GRID_SEARCH_TOP_KS = [5, 10]
-DEFAULT_GRID_SEARCH_RESULTS_OUTPUT = os.getenv(
-    "DEFAULT_GRID_SEARCH_RESULTS_OUTPUT", "evals/results/grid_search_results.csv"
-)
-
 DEFAULT_SITE = StackExchangeSite.USER_EXPERIENCE
 DEFAULT_TAG = "user-behavior"
 DEFAULT_PAGES = int(
     os.getenv("DEFAULT_PAGES", "5")
 )  # Number of pages to fetch (50 questions per page)
 
-MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-MONGODB_DB = os.getenv("MONGO_DB_NAME", "stackexchange")
-MONGODB_COLLECTION = os.getenv("MONGO_COLLECTION_NAME", "questions")
+# Search strategy configuration
+DEFAULT_SEARCH_MODE = (
+    SearchMode.EVALUATION
+)  # Default to evaluation mode for consistent testing
+MIN_SEARCH_CALLS = 3  # Minimum searches for consistency
+MAX_SEARCH_CALLS = 8  # Maximum searches for cost control (production mode)
+EARLY_STOP_CONFIDENCE_THRESHOLD = 0.9  # Confidence threshold for early stopping
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -149,10 +159,6 @@ OPENAI_JUDGE_MODEL = os.getenv("OPENAI_JUDGE_MODEL", str(DEFAULT_JUDGE_MODEL))
 
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-
-NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "your_secure_password")
 
 # UX-related tags for relevance filtering
 UX_TAGS = [

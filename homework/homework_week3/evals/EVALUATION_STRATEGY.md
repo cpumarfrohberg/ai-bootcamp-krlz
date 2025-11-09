@@ -12,7 +12,7 @@
 
 ## 1. Functional Tests
 
-**Status**: ✅ Already implemented in `tests/rag_agent/test_agent.py`
+**Status**: ✅ Already implemented in `tests/wikiagent/test_agent.py`
 
 **Tests**:
 - Tool invocation (wikipedia_search called)

@@ -285,3 +285,200 @@ def should_continue_searching(search_count, results_quality, confidence):
 - **Use adaptive behavior**: Minimum for consistency, early stop when quality is high, continue if quality is low, cap at maximum
 
 The test failures suggest the agent is being too efficient. That's fine for production, but for evaluation you want consistent, thorough behavior. Consider making the search strategy adaptive based on the use case.
+
+---
+
+## Why Ground Truth is Needed and How It Connects to LLM-as-a-Judge
+
+### Two Different Evaluation Dimensions
+
+**1. Ground Truth → Source Metrics (Retrieval Quality)**
+- **Measures**: Did the agent find the right Wikipedia sources?
+- **Metrics**: Hit Rate, MRR
+- **Purpose**: Objective, retrieval-focused evaluation
+- **Example**: Question asks about "customer behavior" → Did it find "Consumer behaviour" page?
+
+**2. LLM-as-a-Judge → Answer Quality (Generation Quality)**
+- **Measures**: Is the answer good (accurate, complete, relevant)?
+- **Metrics**: Accuracy, Completeness, Relevance, Overall Score
+- **Purpose**: Subjective, answer-quality evaluation
+- **Example**: Question asks about "customer behavior" → Is the answer factually correct and comprehensive?
+
+### Why You Need Both
+
+They measure different things and complement each other:
+
+**Scenario 1: High Hit Rate + Low Judge Score**
+- Agent found the right sources (good retrieval)
+- But answer quality is poor (bad synthesis)
+- **Conclusion**: Retrieval works, but answer generation needs improvement
+
+**Scenario 2: Low Hit Rate + High Judge Score**
+- Agent didn't find expected sources (poor retrieval)
+- But answer is still good (found different but valid sources)
+- **Conclusion**: Agent found alternative valid sources, or expected sources were wrong
+
+**Scenario 3: Both High**
+- Agent found expected sources (good retrieval)
+- Answer is high quality (good synthesis)
+- **Conclusion**: Strong overall performance
+
+### How They Work Together in Evaluation
+
+The evaluation workflow:
+1. Run agent on question → Get answer + sources
+2. Calculate source metrics (hit rate, MRR) using ground truth `expected_sources`
+3. Run judge evaluation on the answer → Get judge scores
+4. Combine both into a single score: `(hit_rate^2.0 * judge_score^1.5) / (num_tokens/1000)^0.5`
+
+### Why Manual Curation Matters
+
+The ground truth `expected_sources` must be accurate because:
+- If `expected_sources` are wrong → Hit rate/MRR will be misleading
+- If `expected_sources` don't match what the agent actually finds → You can't measure retrieval quality properly
+- The judge can't tell you if the agent found the "right" sources — only if the answer is good
+
+### Example
+
+**Question**: "What factors influence customer behavior?"
+
+**Ground truth (manual curation)**:
+- `expected_sources: ["Consumer behaviour", "Behavioral economics"]`
+- These are the sources that should be found for this question
+
+**Evaluation**:
+1. Agent finds: `["Consumer behaviour", "Marketing"]` → Hit rate = 1.0 (found "Consumer behaviour")
+2. Judge evaluates answer → Overall score = 0.85 (answer is good)
+3. Combined score = `(1.0^2.0 * 0.85^1.5) / (tokens/1000)^0.5`
+
+**Without accurate ground truth**:
+- If `expected_sources` were wrong → Hit rate would be wrong → Combined score would be wrong → You can't properly evaluate retrieval quality
+
+### Summary
+
+- **Ground truth (`expected_sources`)** = Did it find the right sources? (Retrieval quality)
+- **LLM-as-a-Judge** = Is the answer good? (Generation quality)
+- **Both together** = Complete evaluation (retrieval + generation)
+
+You need to manually curate `expected_sources` so the source metrics (hit rate, MRR) are accurate. The judge can't validate retrieval quality — it only evaluates answer quality.
+
+---
+
+## How Many Questions Should Be in Ground Truth?
+
+### Recommended: 15-25 Questions
+
+**Minimum Viable: 10-15 Questions**
+- ✅ Fast to curate
+- ✅ Quick to run evaluation
+- ❌ Less statistical confidence
+- ❌ May miss edge cases
+- **Use when**: Quick validation, limited time/resources
+
+**Recommended: 15-25 Questions**
+- ✅ Good statistical confidence
+- ✅ Covers diverse question types
+- ✅ Manageable curation effort
+- ✅ Reasonable evaluation cost
+- **Use when**: Standard evaluation, balanced effort vs. confidence
+
+**Comprehensive: 25-50 Questions**
+- ✅ High statistical confidence
+- ✅ Broad coverage of edge cases
+- ✅ Robust evaluation
+- ❌ Significant curation time
+- ❌ Longer evaluation runs
+- **Use when**: Production evaluation, thorough testing
+
+### Statistical Significance
+
+- **10 questions**: ~10% margin of error
+- **20 questions**: ~7% margin of error
+- **30+ questions**: ~5% margin of error
+
+### Evaluation Cost
+
+Each question requires:
+- Agent query (multiple API calls for searches + retrievals)
+- Judge evaluation (1 API call)
+- **With 20 questions**: ~20 agent queries + 20 judge calls
+
+### Manual Curation Effort
+
+Each question needs:
+1. Run agent query
+2. Review sources found
+3. Curate expected_sources
+4. **Estimate**: 5-10 minutes per question
+5. **20 questions** ≈ 2-3 hours of work
+
+### Recommendation for Your Case
+
+**Aim for 15-20 questions**:
+1. You currently have 50, but some are irrelevant
+2. After removing data quality questions, you'll have ~45
+3. Select the best 15-20 that:
+   - Cover different aspects of customer behavior
+   - Include varied question types (what, how, why)
+   - Represent different complexity levels
+   - Are most relevant to your use case
+
+### Question Diversity
+
+Aim for:
+- **5-7 questions** about user behavior patterns
+- **4-5 questions** about decision-making/choice architecture
+- **3-4 questions** about user experience/interface behavior
+- **2-3 questions** about behavioral economics/psychology
+- **1-2 edge cases** or complex questions
+
+### Bottom Line
+
+**15-20 questions is a solid number**:
+- Good statistical confidence
+- Manageable curation effort
+- Reasonable evaluation cost
+- Covers diverse question types
+
+**Quality over quantity**: Start with 15-20 well-curated questions rather than 50 with mixed quality.
+
+---
+
+## Agent Behavior Issue: Too Many Page Retrievals vs. Searches
+
+### The Problem
+
+In EVALUATION mode, the agent is doing:
+- ✅ **3 searches** (correct - Phase 1)
+- ❌ **39+ page retrievals** (too many - should do more searches instead)
+
+**Expected behavior**:
+- Phase 1: 3-5 broad searches
+- Phase 2: 8-12 specific searches
+- Retrieve 5-10 most relevant pages
+- **Total: ~11-17 searches**, not 3 searches + 39 retrievals
+
+### Why This Happens
+
+The agent is interpreting instructions as:
+1. Do 3 searches
+2. Retrieve all pages from those search results
+
+**Should be**:
+1. Do 3-5 broad searches
+2. Do 8-12 more specific searches
+3. Retrieve only the most relevant pages
+
+### The Issue
+
+The instructions focus on **search count** but don't clearly limit **page retrievals**. The agent is prioritizing page retrieval over doing more searches, which is:
+- ❌ Inefficient (too many API calls)
+- ❌ Not what instructions intend
+- ❌ Wastes tokens and time
+
+### Solution
+
+Update instructions to clarify:
+- **Search strategy**: Do 11-17 searches total (3-5 broad + 8-12 specific)
+- **Retrieval strategy**: Retrieve only the 5-10 most relevant pages, not all pages from search results
+- **Balance**: Prioritize doing more searches over retrieving more pages

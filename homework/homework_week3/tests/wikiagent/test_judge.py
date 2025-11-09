@@ -37,7 +37,7 @@ def test_answer():
 @pytest.mark.timeout(120)
 async def test_judge_evaluates_answer(test_question, test_answer):
     """Test that judge evaluates answer and returns structured output"""
-    evaluation = await evaluate_answer(test_question, test_answer)
+    evaluation, usage = await evaluate_answer(test_question, test_answer)
 
     # Verify evaluation structure
     assert (
@@ -49,12 +49,19 @@ async def test_judge_evaluates_answer(test_question, test_answer):
     assert isinstance(evaluation.reasoning, str)
     assert len(evaluation.reasoning) >= MIN_REASONING_LENGTH
 
+    # Verify usage information
+    assert isinstance(usage, dict)
+    assert "input_tokens" in usage
+    assert "output_tokens" in usage
+    assert "total_tokens" in usage
+    assert usage["total_tokens"] == usage["input_tokens"] + usage["output_tokens"]
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(120)
 async def test_judge_output_structure(test_question, test_answer):
     """Test that judge output has correct structure"""
-    evaluation = await evaluate_answer(test_question, test_answer)
+    evaluation, usage = await evaluate_answer(test_question, test_answer)
 
     # Verify all required fields are present
     assert hasattr(evaluation, "overall_score")
@@ -63,12 +70,18 @@ async def test_judge_output_structure(test_question, test_answer):
     assert hasattr(evaluation, "relevance")
     assert hasattr(evaluation, "reasoning")
 
+    # Verify usage structure
+    assert isinstance(usage, dict)
+    assert "input_tokens" in usage
+    assert "output_tokens" in usage
+    assert "total_tokens" in usage
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(120)
 async def test_judge_scores_in_range(test_question, test_answer):
     """Test that all judge scores are in valid range (0.0 to 1.0)"""
-    evaluation = await evaluate_answer(test_question, test_answer)
+    evaluation, usage = await evaluate_answer(test_question, test_answer)
 
     assert MIN_SCORE <= evaluation.overall_score <= MAX_SCORE
     assert MIN_SCORE <= evaluation.accuracy <= MAX_SCORE

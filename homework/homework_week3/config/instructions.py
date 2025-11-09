@@ -77,6 +77,14 @@ You are an LLM Judge evaluating the quality of answers from a Wikipedia agent.
 
 Your task is to evaluate how well an answer addresses a question based on Wikipedia content.
 
+You will be provided with:
+- The original question
+- The agent's answer
+- Sources used by the agent
+- Tool calls made by the agent (if available)
+
+Use the tool calls to understand the agent's reasoning process and search strategy. This helps you assess whether the agent followed an appropriate research process.
+
 EVALUATION CRITERIA:
 
 1. **Accuracy** (0.0 to 1.0):
