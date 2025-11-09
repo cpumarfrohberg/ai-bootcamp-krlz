@@ -10,7 +10,7 @@ from pydantic_ai.messages import FunctionToolCallEvent
 from config import DEFAULT_MAX_TOKENS, DEFAULT_SEARCH_MODE, OPENAI_RAG_MODEL, SearchMode
 from config.adaptive_instructions import get_wikipedia_agent_instructions
 from config.instructions import InstructionsConfig, InstructionType
-from wikiagent.models import RAGAnswer, WikipediaAgentResponse
+from wikiagent.models import SearchAgentAnswer, WikipediaAgentResponse
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ async def query_wikipedia(
         model=model,
         tools=[wikipedia_search, wikipedia_get_page],
         instructions=instructions,
-        output_type=RAGAnswer,
+        output_type=SearchAgentAnswer,
         model_settings=ModelSettings(max_tokens=DEFAULT_MAX_TOKENS),
         end_strategy="exhaustive",
     )

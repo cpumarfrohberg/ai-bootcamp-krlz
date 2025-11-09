@@ -13,7 +13,7 @@ from wikiagent.config import (
     TEST_REASONING,
     TEST_SOURCES,
 )
-from wikiagent.models import RAGAnswer
+from wikiagent.models import SearchAgentAnswer, TokenUsage
 
 
 @pytest.fixture
@@ -24,8 +24,8 @@ def test_question():
 
 @pytest.fixture
 def test_answer():
-    """Test RAGAnswer for judge evaluation"""
-    return RAGAnswer(
+    """Test SearchAgentAnswer for judge evaluation"""
+    return SearchAgentAnswer(
         answer=TEST_ANSWER,
         confidence=TEST_CONFIDENCE,
         sources_used=TEST_SOURCES,
@@ -37,9 +37,14 @@ def test_answer():
 @pytest.mark.timeout(120)
 async def test_judge_evaluates_answer(test_question, test_answer):
     """Test that judge evaluates answer and returns structured output"""
-    evaluation, usage = await evaluate_answer(test_question, test_answer)
+    result = await evaluate_answer(test_question, test_answer)
+
+    # Verify result structure
+    assert hasattr(result, "evaluation")
+    assert hasattr(result, "usage")
 
     # Verify evaluation structure
+    evaluation = result.evaluation
     assert (
         evaluation.overall_score >= MIN_SCORE and evaluation.overall_score <= MAX_SCORE
     )
@@ -50,20 +55,25 @@ async def test_judge_evaluates_answer(test_question, test_answer):
     assert len(evaluation.reasoning) >= MIN_REASONING_LENGTH
 
     # Verify usage information
-    assert isinstance(usage, dict)
-    assert "input_tokens" in usage
-    assert "output_tokens" in usage
-    assert "total_tokens" in usage
-    assert usage["total_tokens"] == usage["input_tokens"] + usage["output_tokens"]
+    usage = result.usage
+    assert isinstance(usage, TokenUsage)
+    assert usage.input_tokens >= 0
+    assert usage.output_tokens >= 0
+    assert usage.total_tokens == usage.input_tokens + usage.output_tokens
 
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(120)
 async def test_judge_output_structure(test_question, test_answer):
     """Test that judge output has correct structure"""
-    evaluation, usage = await evaluate_answer(test_question, test_answer)
+    result = await evaluate_answer(test_question, test_answer)
 
-    # Verify all required fields are present
+    # Verify result structure
+    assert hasattr(result, "evaluation")
+    assert hasattr(result, "usage")
+
+    # Verify all required fields are present in evaluation
+    evaluation = result.evaluation
     assert hasattr(evaluation, "overall_score")
     assert hasattr(evaluation, "accuracy")
     assert hasattr(evaluation, "completeness")
@@ -71,18 +81,20 @@ async def test_judge_output_structure(test_question, test_answer):
     assert hasattr(evaluation, "reasoning")
 
     # Verify usage structure
-    assert isinstance(usage, dict)
-    assert "input_tokens" in usage
-    assert "output_tokens" in usage
-    assert "total_tokens" in usage
+    usage = result.usage
+    assert isinstance(usage, TokenUsage)
+    assert hasattr(usage, "input_tokens")
+    assert hasattr(usage, "output_tokens")
+    assert hasattr(usage, "total_tokens")
 
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(120)
 async def test_judge_scores_in_range(test_question, test_answer):
     """Test that all judge scores are in valid range (0.0 to 1.0)"""
-    evaluation, usage = await evaluate_answer(test_question, test_answer)
+    result = await evaluate_answer(test_question, test_answer)
 
+    evaluation = result.evaluation
     assert MIN_SCORE <= evaluation.overall_score <= MAX_SCORE
     assert MIN_SCORE <= evaluation.accuracy <= MAX_SCORE
     assert MIN_SCORE <= evaluation.completeness <= MAX_SCORE

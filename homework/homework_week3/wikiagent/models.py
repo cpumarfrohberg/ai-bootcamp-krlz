@@ -16,7 +16,7 @@ class SearchResult(BaseModel):
     )
 
 
-class RAGAnswer(BaseModel):
+class SearchAgentAnswer(BaseModel):
     answer: str = Field(..., description="The answer to the user's question")
     confidence: float = Field(
         ..., ge=0.0, le=1.0, description="Confidence in the answer (0.0 to 1.0)"
@@ -44,10 +44,18 @@ class WikipediaPageContent(BaseModel):
 
 
 class WikipediaAgentResponse(BaseModel):
-    answer: RAGAnswer = Field(..., description="The structured answer")
+    answer: SearchAgentAnswer = Field(..., description="The structured answer")
     tool_calls: list[dict] = Field(
         ..., description="List of tool calls made during query"
     )
+
+
+class TokenUsage(BaseModel):
+    """Token usage information from LLM API calls"""
+
+    input_tokens: int = Field(..., ge=0, description="Number of input tokens used")
+    output_tokens: int = Field(..., ge=0, description="Number of output tokens used")
+    total_tokens: int = Field(..., ge=0, description="Total tokens used")
 
 
 class JudgeEvaluation(BaseModel):
@@ -66,3 +74,10 @@ class JudgeEvaluation(BaseModel):
         ..., ge=0.0, le=1.0, description="Answer relevance to question (0.0 to 1.0)"
     )
     reasoning: str = Field(..., description="Brief explanation of the evaluation")
+
+
+class JudgeResult(BaseModel):
+    """Result from judge evaluation including evaluation and usage"""
+
+    evaluation: JudgeEvaluation = Field(..., description="Judge evaluation scores")
+    usage: TokenUsage = Field(..., description="Token usage information")

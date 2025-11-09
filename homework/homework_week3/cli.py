@@ -1,8 +1,73 @@
 # CLI for Wikipedia Agent
 
+import asyncio
+import traceback
+from collections.abc import Coroutine
+from typing import Any
+
 import typer
 
+from config import SearchMode
+from evals.judge import evaluate_answer
+from wikiagent.models import JudgeResult, WikipediaAgentResponse
+from wikiagent.wikipagent import query_wikipedia
+
 app = typer.Typer()
+
+
+def _display_agent_result(
+    result: WikipediaAgentResponse, question: str, verbose: bool
+) -> None:
+    """Display agent result in a consistent format"""
+    typer.echo(f"\n❓ Question: {question}")
+    typer.echo(f"💡 Answer: {result.answer.answer}")
+    typer.echo(f"🎯 Confidence: {result.answer.confidence:.2f}")
+    typer.echo(f"🔍 Tool Calls: {len(result.tool_calls)}")
+
+    if verbose:
+        typer.echo("\n📋 Tool Call History:")
+        for i, call in enumerate(result.tool_calls, 1):
+            typer.echo(f"  {i}. {call['tool_name']}: {call['args']}")
+
+    if result.answer.sources_used:
+        typer.echo("\n📚 Sources:")
+        for i, source in enumerate(result.answer.sources_used[:10], 1):
+            typer.echo(f"  {i}. {source}")
+
+    if verbose and result.answer.reasoning:
+        typer.echo(f"\n💭 Reasoning: {result.answer.reasoning}")
+
+
+def _display_judge_result(result: JudgeResult, verbose: bool) -> None:
+    """Display judge evaluation results"""
+    typer.echo("\n📊 Judge Evaluation Results:")
+    typer.echo(f"  Overall Score: {result.evaluation.overall_score:.2f}")
+    typer.echo(f"  Accuracy: {result.evaluation.accuracy:.2f}")
+    typer.echo(f"  Completeness: {result.evaluation.completeness:.2f}")
+    typer.echo(f"  Relevance: {result.evaluation.relevance:.2f}")
+
+    if verbose:
+        typer.echo(f"\n💭 Judge Reasoning: {result.evaluation.reasoning}")
+        typer.echo("\n📊 Judge Token Usage:")
+        typer.echo(f"  Input tokens: {result.usage.input_tokens}")
+        typer.echo(f"  Output tokens: {result.usage.output_tokens}")
+        typer.echo(f"  Total tokens: {result.usage.total_tokens}")
+
+
+def _handle_error(e: Exception, verbose: bool, context: str = "") -> None:
+    """Centralized error handling with verbose traceback"""
+    typer.echo(f"❌ Error{context}: {str(e)}", err=True)
+    if verbose:
+        typer.echo(traceback.format_exc(), err=True)
+
+
+def _run_async(coro: Coroutine[Any, Any, None]) -> None:
+    """Helper to run async functions with error handling"""
+    try:
+        asyncio.run(coro)
+    except Exception as e:
+        typer.echo(f"❌ Error: {str(e)}", err=True)
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -16,58 +81,28 @@ def wikipedia_ask(
         help="Search mode: evaluation (strict minimums), production (adaptive), or research (comprehensive)",
     ),
 ):
-    import asyncio
-
-    from config import SearchMode
-    from wikiagent.wikipagent import query_wikipedia
-
+    # Convert mode string to SearchMode enum
     try:
-        # Convert mode string to SearchMode enum
-        try:
-            search_mode = SearchMode(mode.lower())
-        except ValueError:
-            typer.echo(
-                f"❌ Invalid mode: {mode}. Must be one of: evaluation, production, research",
-                err=True,
-            )
-            raise typer.Exit(1)
-
-        typer.echo("🤖 Wikipedia Agent is processing your question...")
-
-        async def run_query():
-            try:
-                result = await query_wikipedia(question, search_mode=search_mode)
-            except Exception as e:
-                typer.echo(f"❌ Error during agent query: {str(e)}", err=True)
-                if verbose:
-                    import traceback
-
-                    typer.echo(traceback.format_exc(), err=True)
-                raise
-
-            typer.echo(f"\n❓ Question: {question}")
-            typer.echo(f"💡 Answer: {result.answer.answer}")
-            typer.echo(f"🎯 Confidence: {result.answer.confidence:.2f}")
-            typer.echo(f"🔍 Tool Calls: {len(result.tool_calls)}")
-
-            if verbose:
-                typer.echo("\n📋 Tool Call History:")
-                for i, call in enumerate(result.tool_calls, 1):
-                    typer.echo(f"  {i}. {call['tool_name']}: {call['args']}")
-
-            if result.answer.sources_used:
-                typer.echo("\n📚 Sources:")
-                for i, source in enumerate(result.answer.sources_used[:10], 1):
-                    typer.echo(f"  {i}. {source}")
-
-            if verbose and result.answer.reasoning:
-                typer.echo(f"\n💭 Reasoning: {result.answer.reasoning}")
-
-        asyncio.run(run_query())
-
-    except Exception as e:
-        typer.echo(f"❌ Error: {str(e)}", err=True)
+        search_mode = SearchMode(mode.lower())
+    except ValueError:
+        typer.echo(
+            f"❌ Invalid mode: {mode}. Must be one of: evaluation, production, research",
+            err=True,
+        )
         raise typer.Exit(1)
+
+    typer.echo("🤖 Wikipedia Agent is processing your question...")
+
+    async def run_query():
+        try:
+            result = await query_wikipedia(question, search_mode=search_mode)
+        except Exception as e:
+            _handle_error(e, verbose, " during agent query")
+            raise
+
+        _display_agent_result(result, question, verbose)
+
+    _run_async(run_query())
 
 
 @app.command()
@@ -78,73 +113,35 @@ def judge(
     ),
 ):
     """Evaluate an answer from the Wikipedia agent using LLM-as-a-Judge"""
-    import asyncio
+    typer.echo("🤖 Wikipedia Agent is processing your question...")
 
-    from config import SearchMode
-    from evals.judge import evaluate_answer
-    from wikiagent.wikipagent import query_wikipedia
+    async def run_evaluation():
+        try:
+            # First, get answer from agent (use evaluation mode for judge)
+            agent_result = await query_wikipedia(
+                question, search_mode=SearchMode.EVALUATION
+            )
+        except Exception as e:
+            _handle_error(e, verbose, " during agent query")
+            raise
 
-    try:
-        typer.echo("🤖 Wikipedia Agent is processing your question...")
+        _display_agent_result(agent_result, question, verbose=False)
 
-        async def run_evaluation():
-            try:
-                # First, get answer from agent (use evaluation mode for judge)
-                agent_result = await query_wikipedia(
-                    question, search_mode=SearchMode.EVALUATION
-                )
-            except Exception as e:
-                typer.echo(f"❌ Error during agent query: {str(e)}", err=True)
-                if verbose:
-                    import traceback
+        # Now evaluate with judge
+        try:
+            typer.echo("\n⚖️  Judge is evaluating the answer...")
+            judge_result = await evaluate_answer(
+                question,
+                agent_result.answer,
+                tool_calls=agent_result.tool_calls,  # Pass tool calls for context
+            )
+        except Exception as e:
+            _handle_error(e, verbose, " during judge evaluation")
+            raise
 
-                    typer.echo(traceback.format_exc(), err=True)
-                raise
+        _display_judge_result(judge_result, verbose)
 
-            typer.echo(f"\n❓ Question: {question}")
-            typer.echo(f"💡 Answer: {agent_result.answer.answer}")
-            typer.echo(f"🎯 Confidence: {agent_result.answer.confidence:.2f}")
-
-            if agent_result.answer.sources_used:
-                typer.echo("\n📚 Sources:")
-                for i, source in enumerate(agent_result.answer.sources_used[:10], 1):
-                    typer.echo(f"  {i}. {source}")
-
-            # Now evaluate with judge
-            try:
-                typer.echo("\n⚖️  Judge is evaluating the answer...")
-                evaluation, judge_usage = await evaluate_answer(
-                    question,
-                    agent_result.answer,
-                    tool_calls=agent_result.tool_calls,  # Pass tool calls for context
-                )
-            except Exception as e:
-                typer.echo(f"❌ Error during judge evaluation: {str(e)}", err=True)
-                if verbose:
-                    import traceback
-
-                    typer.echo(traceback.format_exc(), err=True)
-                raise
-
-            # Display evaluation results
-            typer.echo("\n📊 Judge Evaluation Results:")
-            typer.echo(f"  Overall Score: {evaluation.overall_score:.2f}")
-            typer.echo(f"  Accuracy: {evaluation.accuracy:.2f}")
-            typer.echo(f"  Completeness: {evaluation.completeness:.2f}")
-            typer.echo(f"  Relevance: {evaluation.relevance:.2f}")
-
-            if verbose:
-                typer.echo(f"\n💭 Judge Reasoning: {evaluation.reasoning}")
-                typer.echo("\n📊 Judge Token Usage:")
-                typer.echo(f"  Input tokens: {judge_usage['input_tokens']}")
-                typer.echo(f"  Output tokens: {judge_usage['output_tokens']}")
-                typer.echo(f"  Total tokens: {judge_usage['total_tokens']}")
-
-        asyncio.run(run_evaluation())
-
-    except Exception as e:
-        typer.echo(f"❌ Error: {str(e)}", err=True)
-        raise typer.Exit(1)
+    _run_async(run_evaluation())
 
 
 if __name__ == "__main__":
