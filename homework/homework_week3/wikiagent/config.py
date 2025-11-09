@@ -1,16 +1,5 @@
-# Configuration for RAG Agent
-"""RAG Agent configuration dataclass"""
-
-from dataclasses import dataclass
-
-from config import (
-    DEFAULT_CHUNK_OVERLAP,
-    DEFAULT_CHUNK_SIZE,
-    DEFAULT_MAX_CONTEXT_LENGTH,
-    OPENAI_RAG_MODEL,
-    InstructionType,
-    SearchType,
-)
+# Configuration for Wikipedia Agent
+"""Wikipedia Agent configuration constants"""
 
 # User-Agent header required by Wikipedia API
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
@@ -49,16 +38,3 @@ TEST_REASONING = (
 MIN_SCORE = 0.0
 MAX_SCORE = 1.0
 MIN_REASONING_LENGTH = 1
-
-
-@dataclass
-class RAGConfig:
-    """Configuration for RAG system"""
-
-    search_type: SearchType = SearchType.SENTENCE_TRANSFORMERS
-    openai_model: str = OPENAI_RAG_MODEL  # OpenAI model name (e.g., "gpt-4o-mini")
-    instruction_type: InstructionType = InstructionType.WIKIPEDIA_AGENT
-    chunk_size: int = DEFAULT_CHUNK_SIZE
-    chunk_overlap: int = DEFAULT_CHUNK_OVERLAP
-    max_context_length: int = DEFAULT_MAX_CONTEXT_LENGTH
-    max_tool_calls: int = 3  # Maximum number of tool calls allowed (safety limit)
