@@ -90,3 +90,17 @@ async def test_tool_calls_are_tracked(agent_result):
         assert "tool_name" in call
         assert "args" in call
         assert call["tool_name"] in {"wikipedia_search", "wikipedia_get_page"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(120)
+async def test_agent_returns_token_usage(agent_result):
+    """Test that agent returns token usage information"""
+    assert hasattr(agent_result, "usage"), "Agent result should include usage"
+    assert agent_result.usage is not None, "Usage should not be None"
+    assert agent_result.usage.input_tokens >= 0, "Input tokens should be non-negative"
+    assert agent_result.usage.output_tokens >= 0, "Output tokens should be non-negative"
+    assert (
+        agent_result.usage.total_tokens
+        == agent_result.usage.input_tokens + agent_result.usage.output_tokens
+    ), "Total tokens should equal input + output tokens"

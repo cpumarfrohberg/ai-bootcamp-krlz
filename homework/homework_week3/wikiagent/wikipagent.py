@@ -130,7 +130,18 @@ async def query_wikipedia(
     logger.info(f"Agent completed query. Tool calls: {len(_tool_calls)}")
     print(f"✅ Agent completed query. Made {len(_tool_calls)} tool calls.")
 
+    # Get token usage from agent result
+    usage_obj = result.usage()
+    from wikiagent.models import TokenUsage
+
+    usage = TokenUsage(
+        input_tokens=usage_obj.input_tokens,
+        output_tokens=usage_obj.output_tokens,
+        total_tokens=usage_obj.input_tokens + usage_obj.output_tokens,
+    )
+
     return WikipediaAgentResponse(
         answer=result.output,
         tool_calls=_tool_calls,
+        usage=usage,
     )

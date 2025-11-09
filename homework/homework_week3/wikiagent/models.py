@@ -43,19 +43,20 @@ class WikipediaPageContent(BaseModel):
     url: str | None = Field(None, description="Full Wikipedia URL")
 
 
-class WikipediaAgentResponse(BaseModel):
-    answer: SearchAgentAnswer = Field(..., description="The structured answer")
-    tool_calls: list[dict] = Field(
-        ..., description="List of tool calls made during query"
-    )
-
-
 class TokenUsage(BaseModel):
     """Token usage information from LLM API calls"""
 
     input_tokens: int = Field(..., ge=0, description="Number of input tokens used")
     output_tokens: int = Field(..., ge=0, description="Number of output tokens used")
     total_tokens: int = Field(..., ge=0, description="Total tokens used")
+
+
+class WikipediaAgentResponse(BaseModel):
+    answer: SearchAgentAnswer = Field(..., description="The structured answer")
+    tool_calls: list[dict] = Field(
+        ..., description="List of tool calls made during query"
+    )
+    usage: TokenUsage = Field(..., description="Token usage information")
 
 
 class JudgeEvaluation(BaseModel):

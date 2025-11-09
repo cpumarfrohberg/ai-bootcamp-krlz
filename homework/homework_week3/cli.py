@@ -7,7 +7,8 @@ from typing import Any
 
 import typer
 
-from config import SearchMode
+from config import DEFAULT_SEARCH_MODE, SearchMode
+from evals.evaluate import evaluate_agent
 from evals.judge import evaluate_answer
 from wikiagent.models import JudgeResult, WikipediaAgentResponse
 from wikiagent.wikipagent import query_wikipedia
@@ -140,6 +141,67 @@ def judge(
             raise
 
         _display_judge_result(judge_result, verbose)
+
+    _run_async(run_evaluation())
+
+
+@app.command()
+def evaluate(
+    ground_truth: str = typer.Option(
+        "evals/ground_truth.json",
+        "--ground-truth",
+        "-g",
+        help="Path to ground truth JSON file",
+    ),
+    output: str = typer.Option(
+        "evals/results/evaluation.csv",
+        "--output",
+        "-o",
+        help="Path to output CSV file",
+    ),
+    mode: str = typer.Option(
+        "evaluation",
+        "--mode",
+        "-m",
+        help="Search mode: evaluation (strict minimums), production (adaptive), or research (comprehensive)",
+    ),
+    judge_model: str = typer.Option(
+        None,
+        "--judge-model",
+        "-j",
+        help="Model to use for judging (default: from config)",
+    ),
+):
+    """Run full evaluation workflow on Wikipedia agent"""
+    # Convert mode string to SearchMode enum
+    try:
+        search_mode = SearchMode(mode.lower())
+    except ValueError:
+        typer.echo(
+            f"❌ Invalid mode: {mode}. Must be one of: evaluation, production, research",
+            err=True,
+        )
+        raise typer.Exit(1)
+
+    typer.echo("🚀 Starting evaluation workflow...")
+    typer.echo(f"  Ground truth: {ground_truth}")
+    typer.echo(f"  Output: {output}")
+    typer.echo(f"  Search mode: {search_mode}")
+    if judge_model:
+        typer.echo(f"  Judge model: {judge_model}")
+
+    async def run_evaluation():
+        try:
+            result_path = await evaluate_agent(
+                ground_truth_path=ground_truth,
+                output_path=output,
+                search_mode=search_mode,
+                judge_model=judge_model,
+            )
+            typer.echo(f"\n✅ Evaluation complete! Results saved to: {result_path}")
+        except Exception as e:
+            _handle_error(e, verbose=False, context=" during evaluation")
+            raise
 
     _run_async(run_evaluation())
 

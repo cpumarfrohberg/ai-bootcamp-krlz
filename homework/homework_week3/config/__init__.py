@@ -47,27 +47,6 @@ class TokenizerEncoding(StrEnum):
     R50K_BASE = "r50k_base"
 
 
-class APIEndpoint(StrEnum):
-    """StackExchange API endpoints"""
-
-    BASE_URL = "https://api.stackexchange.com/2.3"
-    QUESTIONS = "questions"
-    ANSWERS = "answers"
-    SITES = "sites"
-    USERS = "users"
-    TAGS = "tags"
-    COMMENTS = "comments"
-    POSTS = "posts"
-    SEARCH = "search"
-    SIMILAR = "similar"
-
-
-class StackExchangeSite(StrEnum):
-    """Supported StackExchange sites for user behavior analysis"""
-
-    USER_EXPERIENCE = "ux"
-
-
 class DataType(StrEnum):
     """Types of data stored in MongoDB"""
 
@@ -131,18 +110,11 @@ DEFAULT_TOKENIZER_MODEL = TokenizerModel.GPT_4O_MINI
 DEFAULT_TOKENIZER_ENCODING_FALLBACK = TokenizerEncoding.CL100K_BASE
 DEFAULT_SCORE_ALPHA = 2.0
 DEFAULT_SCORE_BETA = 0.5
+DEFAULT_SCORE_GAMMA = 1.5
 DEFAULT_TOKEN_NORMALIZATION_DIVISOR = 1000.0
-DEFAULT_GRID_SEARCH_SAMPLES = 10
-DEFAULT_BEST_RESULTS_COUNT = 5
 DEFAULT_SEARCH_TEXT_FIELDS = ["content", "title", "source"]
 DEFAULT_CHUNK_TITLE = "Untitled"
 DEFAULT_CHUNK_SOURCE = "Unknown"
-
-DEFAULT_SITE = StackExchangeSite.USER_EXPERIENCE
-DEFAULT_TAG = "user-behavior"
-DEFAULT_PAGES = int(
-    os.getenv("DEFAULT_PAGES", "5")
-)  # Number of pages to fetch (50 questions per page)
 
 # Search strategy configuration
 DEFAULT_SEARCH_MODE = (
@@ -159,24 +131,3 @@ OPENAI_JUDGE_MODEL = os.getenv("OPENAI_JUDGE_MODEL", str(DEFAULT_JUDGE_MODEL))
 
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-
-# UX-related tags for relevance filtering
-UX_TAGS = [
-    "usability",
-    "user-interface",
-    "user-experience",
-    "interaction-design",
-    "user-research",
-    "user-testing",
-    "user-feedback",
-    "user-satisfaction",
-]
-
-# Behavior keywords for relevance filtering
-BEHAVIOR_KEYWORDS = [
-    "behavior",
-    "satisfaction",
-    "frustration",
-    "user",
-    "usability",
-]
