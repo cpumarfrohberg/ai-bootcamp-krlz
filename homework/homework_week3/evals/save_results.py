@@ -1,4 +1,4 @@
-"""Save evaluation results to CSV and metadata JSON"""
+"""Save evaluation results to JSON"""
 
 import json
 from datetime import datetime
@@ -14,7 +14,12 @@ def save_evaluation_results(
     metadata: dict[str, Any] | None = None,
 ) -> Path:
     """
-    Save evaluation results as CSV and metadata JSON.
+    Save evaluation results as JSON.
+
+    JSON file contains:
+    - Full results array (all per-question metrics)
+    - Summary statistics (averages, best scores)
+    - Metadata (config, timestamp, etc.)
 
     Args:
         results: List of evaluation results, each containing:
@@ -24,11 +29,11 @@ def save_evaluation_results(
             - judge_score: float
             - num_tokens: int
             - combined_score: float
-        output_path: Path to output CSV file (should end with .csv)
+        output_path: Path to output JSON file (should end with .json)
         metadata: Optional metadata dict with evaluation parameters
 
     Returns:
-        Path to the saved CSV file
+        Path to the saved JSON file
 
     Example:
         results = [
@@ -44,31 +49,30 @@ def save_evaluation_results(
         ]
 
         metadata = {
-            "model": "gpt-4o-mini",
+            "ground_truth_file": "evals/ground_truth.json",
+            "search_mode": "evaluation",
             "judge_model": "gpt-4o",
-            "num_questions": 20,
         }
 
         path = save_evaluation_results(
-            results, "evals/results/evaluation.csv", metadata
+            results, "evals/results/evaluation.json", metadata
         )
     """
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Ensure .csv extension
-    if output_path.suffix != ".csv":
-        output_path = output_path.with_suffix(".csv")
+    # Ensure .json extension
+    if output_path.suffix != ".json":
+        output_path = output_path.with_suffix(".json")
 
-    # Convert results to DataFrame
+    # Convert results to DataFrame for calculations
     df = pd.DataFrame(results)
 
     # Sort by combined_score descending (best results first)
     if "combined_score" in df.columns:
         df = df.sort_values("combined_score", ascending=False).reset_index(drop=True)
-
-    # Save DataFrame as CSV
-    df.to_csv(output_path, index=False)
+        # Update results list to match sorted order
+        results = df.to_dict("records")
 
     # Calculate aggregated metrics
     summary = {}
@@ -85,17 +89,18 @@ def save_evaluation_results(
         summary["avg_combined_score"] = float(df["combined_score"].mean())
         summary["best_combined_score"] = float(df["combined_score"].max())
 
-    # Save metadata as JSON in same directory
-    metadata_path = output_path.with_suffix(".metadata.json")
-    metadata_data = {
+    # Build complete JSON structure
+    json_data = {
         "timestamp": datetime.now().isoformat(),
         "num_questions": len(results),
         "summary": summary,
+        "results": results,  # Full per-question results
     }
     if metadata:
-        metadata_data["metadata"] = metadata
+        json_data["metadata"] = metadata
 
-    with open(metadata_path, "w") as f:
-        json.dump(metadata_data, f, indent=2)
+    # Save JSON file
+    with open(output_path, "w") as f:
+        json.dump(json_data, f, indent=2)
 
     return output_path

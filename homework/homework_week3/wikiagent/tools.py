@@ -71,9 +71,11 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
     Use this tool to retrieve the full content of a Wikipedia page
     after using wikipedia_search to find the page title.
 
-    If the page is not found (404) or another error occurs, returns
-    a WikipediaPageContent with empty content and a note, allowing
-    the agent to continue processing other pages.
+    Error handling:
+    - 404 (page not found): Returns WikipediaPageContent with error message
+      (allows agent to continue processing other pages)
+    - Network errors (connection, timeout): Raises RuntimeError
+    - Other HTTP errors (500, 503): Raises RuntimeError
 
     Args:
         title: Wikipedia page title (e.g., "Capybara", "Python (programming language)")
@@ -81,7 +83,10 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
 
     Returns:
         WikipediaPageContent with title, content (raw wikitext), and URL.
-        If page not found, content will be empty with a note.
+        If page not found (404), content will contain an error message.
+
+    Raises:
+        RuntimeError: If network error or HTTP error other than 404 occurs
     """
     # Replace spaces with underscores for Wikipedia URL (used in all code paths)
     page_title = title.replace(" ", "_")
@@ -114,7 +119,7 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
         )
 
     except requests.HTTPError as e:
-        # Handle 404 and other HTTP errors gracefully
+        # Handle 404 gracefully (page doesn't exist - agent can continue)
         if e.response and e.response.status_code == 404:
             logger.warning(f"Wikipedia page not found: {title} (404)")
             # Return empty content with a note - agent can continue
@@ -124,23 +129,16 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
                 url=f"https://en.wikipedia.org/wiki/{page_title}",
             )
         else:
-            # Other HTTP errors (500, 503, etc.) - log and return empty
-            logger.warning(
-                f"HTTP error retrieving Wikipedia page {title}: {e.response.status_code if e.response else 'unknown'}"
-            )
-            return WikipediaPageContent(
-                title=title,
-                content=f"[Error retrieving page: {title} - HTTP {e.response.status_code if e.response else 'error'}]",
-                url=f"https://en.wikipedia.org/wiki/{page_title}",
+            # Other HTTP errors (500, 503, etc.) - raise exception (server issues)
+            status_code = e.response.status_code if e.response else "unknown"
+            logger.error(f"HTTP error retrieving Wikipedia page {title}: {status_code}")
+            raise RuntimeError(
+                f"Failed to get Wikipedia page {title}: HTTP {status_code}"
             )
     except requests.RequestException as e:
-        # Network errors, timeouts, etc. - log and return empty
-        logger.warning(f"Request error retrieving Wikipedia page {title}: {str(e)}")
-        return WikipediaPageContent(
-            title=title,
-            content=f"[Error retrieving page: {title} - {str(e)}]",
-            url=f"https://en.wikipedia.org/wiki/{page_title}",
-        )
+        # Network errors, timeouts, connection issues - raise exception (infrastructure problems)
+        logger.error(f"Network error retrieving Wikipedia page {title}: {str(e)}")
+        raise RuntimeError(f"Failed to get Wikipedia page {title}: {str(e)}")
     except Exception as e:
         # Any other unexpected errors - log and return empty
         logger.warning(f"Unexpected error retrieving Wikipedia page {title}: {str(e)}")

@@ -96,30 +96,43 @@
    d. Count tokens
 3. Aggregate metrics
 4. Calculate combined score
-5. Save results (CSV + metadata JSON)
+5. Save results (JSON format)
 ```
 
 ---
 
 ## Output Format
 
-**CSV** (`evals/results/evaluation.csv`):
-```csv
-question,hit_rate,mrr,judge_score,num_tokens,combined_score
-"What factors influence customer behavior?",1.0,1.0,0.85,2500,1.42
-```
-
-**Metadata JSON** (`evals/results/evaluation.metadata.json`):
+**JSON** (`evals/results/evaluation.json`):
 ```json
 {
   "timestamp": "2025-01-XX...",
-  "model": "gpt-4o-mini",
-  "judge_model": "gpt-4o-mini",
   "num_questions": 20,
-  "avg_hit_rate": 0.95,
-  "avg_mrr": 0.88,
-  "avg_judge_score": 0.83,
-  "avg_combined_score": 1.35
+  "summary": {
+    "avg_hit_rate": 0.95,
+    "avg_mrr": 0.88,
+    "avg_judge_score": 0.83,
+    "avg_combined_score": 1.35,
+    "best_combined_score": 1.42,
+    "avg_num_tokens": 2500,
+    "total_tokens": 50000
+  },
+  "metadata": {
+    "ground_truth_file": "evals/ground_truth.json",
+    "search_mode": "evaluation",
+    "judge_model": "gpt-4o"
+  },
+  "results": [
+    {
+      "question": "What factors influence customer behavior?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.85,
+      "num_tokens": 2500,
+      "combined_score": 1.42
+    },
+    ...
+  ]
 }
 ```
 
@@ -149,4 +162,4 @@ question,hit_rate,mrr,judge_score,num_tokens,combined_score
 - [ ] Implement token counting
 - [ ] Implement combined score calculation
 - [ ] Create evaluation runner
-- [ ] Save results (CSV + metadata JSON)
+- [ ] Save results (JSON format)

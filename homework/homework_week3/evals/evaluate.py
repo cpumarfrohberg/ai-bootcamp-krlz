@@ -15,7 +15,7 @@ from wikiagent.wikipagent import query_wikipedia
 logger = logging.getLogger(__name__)
 
 # Constants
-DEFAULT_OUTPUT_PATH = "evals/results/evaluation.csv"
+DEFAULT_OUTPUT_PATH = "evals/results/evaluation.json"
 QUESTION_PREVIEW_LENGTH = 50  # Max length for question in logs
 SCORE_DECIMAL_PLACES = 2  # Decimal places for score formatting
 FALLBACK_HIT_RATE = 0.0  # Fallback hit rate for failed evaluations
@@ -36,17 +36,17 @@ async def evaluate_agent(
 
     Args:
         ground_truth_path: Path to ground truth JSON file
-        output_path: Path to output CSV file (default: DEFAULT_OUTPUT_PATH)
+        output_path: Path to output JSON file (default: DEFAULT_OUTPUT_PATH)
         search_mode: Search mode for agent (default: EVALUATION)
         judge_model: Model to use for judging (default: from config)
 
     Returns:
-        Path to saved CSV file
+        Path to saved JSON file
 
     Example:
         path = await evaluate_agent(
             "evals/ground_truth.json",
-            "evals/results/evaluation.csv",
+            "evals/results/evaluation.json",
             SearchMode.EVALUATION,
         )
     """

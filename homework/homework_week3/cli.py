@@ -154,10 +154,10 @@ def evaluate(
         help="Path to ground truth JSON file",
     ),
     output: str = typer.Option(
-        "evals/results/evaluation.csv",
+        "evals/results/evaluation.json",
         "--output",
         "-o",
-        help="Path to output CSV file",
+        help="Path to output JSON file",
     ),
     mode: str = typer.Option(
         "evaluation",
