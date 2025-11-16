@@ -168,15 +168,14 @@ def _render_chat_page() -> None:
             st.rerun()
         st.divider()
         st.header("Statistics")
-        if "last_result" in st.session_state and st.session_state.last_result:
-            result = st.session_state.last_result
-            if result.usage:
-                u = result.usage
-                st.metric("Input Tokens", u.input_tokens)
-                st.metric("Output Tokens", u.output_tokens)
-                st.metric("Total Tokens", u.total_tokens)
-            else:
-                st.info("No token usage data available")
+        result = st.session_state.get("last_result")
+        if result and hasattr(result, "usage") and result.usage:
+            u = result.usage
+            st.metric("Input Tokens", u.input_tokens)
+            st.metric("Output Tokens", u.output_tokens)
+            st.metric("Total Tokens", u.total_tokens)
+        elif result and result.error:
+            st.info("⚠️ Error occurred - check main chat for details")
         else:
             st.info("No queries yet. Ask a question to see token usage.")
 
