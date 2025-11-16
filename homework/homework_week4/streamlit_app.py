@@ -12,19 +12,16 @@ from config import DEFAULT_SEARCH_MODE, SearchMode
 from wikiagent.stream_handler import SearchAgentAnswerHandler
 from wikiagent.wikipagent import query_wikipedia_stream
 
-# Constants
 QUERY_TRUNCATION_LENGTH = 50
 MAX_QUESTION_LENGTH = 500
 MODE_OPTIONS = ["evaluation", "production", "research"]
 
-# Page configuration
 st.set_page_config(
     page_title="Wikipedia Agent",
     page_icon="🤖",
     layout="wide",
 )
 
-# Initialize session state
 st.session_state.setdefault("messages", [])
 st.session_state.setdefault("streaming", False)
 st.session_state.setdefault("tool_calls", [])
@@ -46,7 +43,6 @@ async def run_agent_stream(
     sources_container: Any,
     tool_calls_container: Any,
 ) -> None:
-    """Run the agent with streaming and update UI components in real-time."""
     handler = SearchAgentAnswerHandler(
         answer_container=answer_container,
         confidence_container=confidence_container,
@@ -78,7 +74,7 @@ async def run_agent_stream(
         try:
             parser.parse_incremental(delta)
         except Exception:
-            pass  # Silently continue on parsing errors
+            pass
 
     result = await query_wikipedia_stream(
         question=question,
@@ -91,10 +87,8 @@ async def run_agent_stream(
 
 
 def main() -> None:
-    """Main Streamlit application"""
     st.title("🤖 Wikipedia Agent")
 
-    # Navigation sidebar
     with st.sidebar:
         st.header("Navigation")
         nav = st.radio(
@@ -102,7 +96,6 @@ def main() -> None:
         )
         st.divider()
 
-    # Route to appropriate page
     if nav == "About":
         _render_about_page()
     elif nav == "Settings":
@@ -112,7 +105,6 @@ def main() -> None:
 
 
 def _render_about_page() -> None:
-    """Render the About page with instructions and examples"""
     st.markdown("## Welcome to Wikipedia Agent")
     st.markdown(
         "Ask questions and get answers from Wikipedia with real-time streaming!"
@@ -138,7 +130,6 @@ def _render_about_page() -> None:
 
 
 def _render_settings_page() -> None:
-    """Render the Settings page"""
     st.markdown("## Settings")
     current_mode = st.session_state.get("search_mode", DEFAULT_SEARCH_MODE)
     with st.form("settings_form"):
@@ -161,7 +152,6 @@ def _render_settings_page() -> None:
 
 
 def _render_chat_page() -> None:
-    """Render the main chat interface"""
     saved_mode = st.session_state.get("search_mode")
     with st.sidebar:
         st.header("Configuration")
@@ -244,7 +234,6 @@ def _render_chat_page() -> None:
                 if "last_result" in st.session_state:
                     result = st.session_state.last_result
 
-                    # Handle errors from agent
                     if result.error:
                         st.error(f"⚠️ {result.error.message}")
                         st.info(f"💡 {result.error.suggestion}")
@@ -252,7 +241,6 @@ def _render_chat_page() -> None:
                             with st.expander("🔍 Technical Details"):
                                 st.code(result.error.technical_details)
                     else:
-                        # Success case
                         if result.answer:
                             st.session_state.messages.append(
                                 {"role": "assistant", "content": result.answer.answer}

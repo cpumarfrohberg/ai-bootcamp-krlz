@@ -1,7 +1,5 @@
-# Configuration for Wikipedia Agent
 """Wikipedia Agent configuration constants"""
 
-# User-Agent header required by Wikipedia API
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
 
 # Maximum page content length to prevent context overflow

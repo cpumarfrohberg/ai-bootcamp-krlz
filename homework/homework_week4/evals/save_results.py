@@ -74,7 +74,6 @@ def save_evaluation_results(
         # Update results list to match sorted order
         results = df.to_dict("records")
 
-    # Calculate aggregated metrics
     summary = {}
     if "hit_rate" in df.columns:
         summary["avg_hit_rate"] = float(df["hit_rate"].mean())
@@ -89,7 +88,6 @@ def save_evaluation_results(
         summary["avg_combined_score"] = float(df["combined_score"].mean())
         summary["best_combined_score"] = float(df["combined_score"].max())
 
-    # Build complete JSON structure
     json_data = {
         "timestamp": datetime.now().isoformat(),
         "num_questions": len(results),
@@ -99,7 +97,6 @@ def save_evaluation_results(
     if metadata:
         json_data["metadata"] = metadata
 
-    # Save JSON file
     with open(output_path, "w") as f:
         json.dump(json_data, f, indent=2)
 

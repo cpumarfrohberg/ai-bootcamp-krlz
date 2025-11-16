@@ -14,7 +14,6 @@ from wikiagent.wikipagent import query_wikipedia
 
 logger = logging.getLogger(__name__)
 
-# Constants
 DEFAULT_OUTPUT_PATH = "evals/results/evaluation.json"
 QUESTION_PREVIEW_LENGTH = 50  # Max length for question in logs
 SCORE_DECIMAL_PLACES = 2  # Decimal places for score formatting
@@ -50,7 +49,6 @@ async def evaluate_agent(
             SearchMode.EVALUATION,
         )
     """
-    # Load ground truth
     ground_truth_path = Path(ground_truth_path)
     if not ground_truth_path.exists():
         raise FileNotFoundError(f"Ground truth file not found: {ground_truth_path}")
@@ -72,15 +70,12 @@ async def evaluate_agent(
         )
 
         try:
-            # Run agent query
             agent_result = await query_wikipedia(question, search_mode=search_mode)
 
-            # Calculate source metrics
             actual_sources = agent_result.answer.sources_used or []
             hit_rate = calculate_hit_rate(expected_sources, actual_sources)
             mrr = calculate_mrr(expected_sources, actual_sources)
 
-            # Run judge evaluation
             judge_result = await evaluate_answer(
                 question,
                 agent_result.answer,
@@ -101,7 +96,6 @@ async def evaluate_agent(
                 num_tokens=total_tokens,
             )
 
-            # Store result
             results.append(
                 {
                     "question": question,
@@ -142,7 +136,6 @@ async def evaluate_agent(
     if judge_model:
         metadata["judge_model"] = judge_model
 
-    # Save results
     output_path = save_evaluation_results(results, output_path, metadata)
 
     logger.info(f"Evaluation complete. Results saved to: {output_path}")

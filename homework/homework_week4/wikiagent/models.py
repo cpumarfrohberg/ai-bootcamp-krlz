@@ -2,6 +2,13 @@
 
 from pydantic import BaseModel, Field
 
+# Constants for validation
+MIN_CONFIDENCE_SCORE = 0.0
+MAX_CONFIDENCE_SCORE = 1.0
+MIN_TOKEN_COUNT = 0
+MIN_JUDGE_SCORE = 0.0
+MAX_JUDGE_SCORE = 1.0
+
 
 class SearchResult(BaseModel):
     content: str = Field(..., description="The content/text of the search result")
@@ -19,7 +26,10 @@ class SearchResult(BaseModel):
 class SearchAgentAnswer(BaseModel):
     answer: str = Field(..., description="The answer to the user's question")
     confidence: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence in the answer (0.0 to 1.0)"
+        ...,
+        ge=MIN_CONFIDENCE_SCORE,
+        le=MAX_CONFIDENCE_SCORE,
+        description=f"Confidence in the answer ({MIN_CONFIDENCE_SCORE} to {MAX_CONFIDENCE_SCORE})",
     )
     sources_used: list[str] = Field(
         ..., description="List of source filenames used to generate the answer"
@@ -46,9 +56,13 @@ class WikipediaPageContent(BaseModel):
 class TokenUsage(BaseModel):
     """Token usage information from LLM API calls"""
 
-    input_tokens: int = Field(..., ge=0, description="Number of input tokens used")
-    output_tokens: int = Field(..., ge=0, description="Number of output tokens used")
-    total_tokens: int = Field(..., ge=0, description="Total tokens used")
+    input_tokens: int = Field(
+        ..., ge=MIN_TOKEN_COUNT, description="Number of input tokens used"
+    )
+    output_tokens: int = Field(
+        ..., ge=MIN_TOKEN_COUNT, description="Number of output tokens used"
+    )
+    total_tokens: int = Field(..., ge=MIN_TOKEN_COUNT, description="Total tokens used")
 
 
 class AgentError(BaseModel):
@@ -83,16 +97,28 @@ class JudgeEvaluation(BaseModel):
     """Judge evaluation output for answer quality assessment"""
 
     overall_score: float = Field(
-        ..., ge=0.0, le=1.0, description="Overall quality score (0.0 to 1.0)"
+        ...,
+        ge=MIN_JUDGE_SCORE,
+        le=MAX_JUDGE_SCORE,
+        description=f"Overall quality score ({MIN_JUDGE_SCORE} to {MAX_JUDGE_SCORE})",
     )
     accuracy: float = Field(
-        ..., ge=0.0, le=1.0, description="Factual correctness score (0.0 to 1.0)"
+        ...,
+        ge=MIN_JUDGE_SCORE,
+        le=MAX_JUDGE_SCORE,
+        description=f"Factual correctness score ({MIN_JUDGE_SCORE} to {MAX_JUDGE_SCORE})",
     )
     completeness: float = Field(
-        ..., ge=0.0, le=1.0, description="Answer thoroughness score (0.0 to 1.0)"
+        ...,
+        ge=MIN_JUDGE_SCORE,
+        le=MAX_JUDGE_SCORE,
+        description=f"Answer thoroughness score ({MIN_JUDGE_SCORE} to {MAX_JUDGE_SCORE})",
     )
     relevance: float = Field(
-        ..., ge=0.0, le=1.0, description="Answer relevance to question (0.0 to 1.0)"
+        ...,
+        ge=MIN_JUDGE_SCORE,
+        le=MAX_JUDGE_SCORE,
+        description=f"Answer relevance to question ({MIN_JUDGE_SCORE} to {MAX_JUDGE_SCORE})",
     )
     reasoning: str = Field(..., description="Brief explanation of the evaluation")
 
