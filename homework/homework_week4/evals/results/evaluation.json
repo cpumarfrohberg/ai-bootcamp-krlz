@@ -1,0 +1,124 @@
+{
+  "timestamp": "2025-11-09T20:36:03.219464",
+  "num_questions": 13,
+  "summary": {
+    "avg_hit_rate": 0.6923076923076923,
+    "avg_mrr": 0.5641025641025641,
+    "avg_judge_score": 0.7269230769230769,
+    "avg_num_tokens": 172210.53846153847,
+    "total_tokens": 2238737,
+    "avg_combined_score": 0.07573646676762419,
+    "best_combined_score": 0.1772980774097725
+  },
+  "results": [
+    {
+      "question": "What is better than top-posting and bottom-posting?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.9,
+      "num_tokens": 23191,
+      "combined_score": 0.1772980774097725
+    },
+    {
+      "question": "How do you give your user options without overloading them?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.9,
+      "num_tokens": 24426,
+      "combined_score": 0.17275776934219597
+    },
+    {
+      "question": "What is the optimal load time for a website before users abandon a mobile application or website?",
+      "hit_rate": 1.0,
+      "mrr": 0.3333333333333333,
+      "judge_score": 0.85,
+      "num_tokens": 28682,
+      "combined_score": 0.14632673182583816
+    },
+    {
+      "question": "How do users expect dropdown navigation to work?",
+      "hit_rate": 1.0,
+      "mrr": 0.5,
+      "judge_score": 0.85,
+      "num_tokens": 45401,
+      "combined_score": 0.1163042752192006
+    },
+    {
+      "question": "Do users behave differently to interactive lo-fi wireframes compared to hi-fi mockups in user testing sessions",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.85,
+      "num_tokens": 51188,
+      "combined_score": 0.10953282981115299
+    },
+    {
+      "question": "What is the best way to motivate users to participate in completing tedious tasks?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.9,
+      "num_tokens": 93226,
+      "combined_score": 0.08842910690889791
+    },
+    {
+      "question": "Are websites and interactions designed to build or skip levels of trust?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.85,
+      "num_tokens": 93123,
+      "combined_score": 0.08120820466665495
+    },
+    {
+      "question": "What's a UX-friendly way to inconvenience a user into action e.g. prompt for payment",
+      "hit_rate": 1.0,
+      "mrr": 0.5,
+      "judge_score": 0.5,
+      "num_tokens": 36491,
+      "combined_score": 0.058527789797833525
+    },
+    {
+      "question": "Is there research on whether users know how to open a link in a new tab?",
+      "hit_rate": 1.0,
+      "mrr": 1.0,
+      "judge_score": 0.6,
+      "num_tokens": 184788,
+      "combined_score": 0.034189282997567884
+    },
+    {
+      "question": "Why do users click randomly and rapidly when an application hangs?",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "judge_score": 0.75,
+      "num_tokens": 26760,
+      "combined_score": 0.0
+    },
+    {
+      "question": "Best way to prevent a user from selecting None/Others before reading all available options",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "judge_score": 0.6,
+      "num_tokens": 582733,
+      "combined_score": 0.0
+    },
+    {
+      "question": "User behavior that caught you off guard?",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "judge_score": 0.0,
+      "num_tokens": 0,
+      "combined_score": 0.0
+    },
+    {
+      "question": "Deliberately annoying users to discourage certain behaviour. Is this a bad idea?",
+      "hit_rate": 0.0,
+      "mrr": 0.0,
+      "judge_score": 0.9,
+      "num_tokens": 1048728,
+      "combined_score": 0.0
+    }
+  ],
+  "metadata": {
+    "ground_truth_file": "evals/ground_truth.json",
+    "search_mode": "evaluation",
+    "judge_model": "gpt-4o"
+  }
+}
