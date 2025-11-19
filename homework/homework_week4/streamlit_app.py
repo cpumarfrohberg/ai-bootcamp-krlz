@@ -1,8 +1,5 @@
-"""Streamlit application for Wikipedia Agent with streaming structured output"""
-
 import asyncio
 import json
-import traceback
 from typing import Any
 
 import streamlit as st
@@ -53,7 +50,7 @@ async def run_agent_stream(
     parser = StreamingJSONParser(handler)
     tool_calls_list = []
 
-    def tool_call_callback(tool_name: str, args: str) -> None:
+    def _handle_tool_call(tool_name: str, args: str) -> None:
         try:
             args_dict = json.loads(args) if isinstance(args, str) else args
             query = (
@@ -70,7 +67,7 @@ async def run_agent_stream(
         )
         tool_calls_container.markdown(tool_calls_text)
 
-    def structured_output_callback(delta: str) -> None:
+    def _handle_structured_output(delta: str) -> None:
         try:
             parser.parse_incremental(delta)
         except Exception:
@@ -79,8 +76,8 @@ async def run_agent_stream(
     result = await query_wikipedia_stream(
         question=question,
         search_mode=search_mode,
-        tool_call_callback=tool_call_callback,
-        structured_output_callback=structured_output_callback,
+        tool_call_callback=_handle_tool_call,
+        structured_output_callback=_handle_structured_output,
     )
     st.session_state.last_result = result
     st.session_state.tool_calls = tool_calls_list

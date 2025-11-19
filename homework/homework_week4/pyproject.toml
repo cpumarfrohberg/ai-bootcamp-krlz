@@ -18,9 +18,6 @@ dependencies = [
     "jaxn>=0.0.1",
 ]
 
-[project.scripts]
-ask = "cli:app"
-
 [tool.hatch.build.targets.wheel]
 packages = ["config"]
 
