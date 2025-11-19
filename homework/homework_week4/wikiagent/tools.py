@@ -32,14 +32,13 @@ def wikipedia_search(query: str) -> List[WikipediaSearchResult]:
         RuntimeError: If the API request fails or returns invalid data
     """
     try:
-        # Replace spaces with "+" for Wikipedia API
         search_query = query.replace(" ", "+")
 
         url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch={search_query}"
 
         headers = {"User-Agent": USER_AGENT}
         response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raise exception for bad status codes
+        response.raise_for_status()
 
         data = response.json()
 
@@ -88,7 +87,6 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
     Raises:
         RuntimeError: If network error or HTTP error other than 404 occurs
     """
-    # Replace spaces with underscores for Wikipedia URL (used in all code paths)
     page_title = title.replace(" ", "_")
 
     try:
@@ -119,28 +117,23 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
         )
 
     except requests.HTTPError as e:
-        # Handle 404 gracefully (page doesn't exist - agent can continue)
         if e.response and e.response.status_code == 404:
             logger.warning(f"Wikipedia page not found: {title} (404)")
-            # Return empty content with a note - agent can continue
             return WikipediaPageContent(
                 title=title,
                 content=f"[Page not found: {title} does not exist on Wikipedia]",
                 url=f"https://en.wikipedia.org/wiki/{page_title}",
             )
         else:
-            # Other HTTP errors (500, 503, etc.) - raise exception (server issues)
             status_code = e.response.status_code if e.response else "unknown"
             logger.error(f"HTTP error retrieving Wikipedia page {title}: {status_code}")
             raise RuntimeError(
                 f"Failed to get Wikipedia page {title}: HTTP {status_code}"
             )
     except requests.RequestException as e:
-        # Network errors, timeouts, connection issues - raise exception (infrastructure problems)
         logger.error(f"Network error retrieving Wikipedia page {title}: {str(e)}")
         raise RuntimeError(f"Failed to get Wikipedia page {title}: {str(e)}")
     except Exception as e:
-        # Any other unexpected errors - log and return empty
         logger.warning(f"Unexpected error retrieving Wikipedia page {title}: {str(e)}")
         return WikipediaPageContent(
             title=title,

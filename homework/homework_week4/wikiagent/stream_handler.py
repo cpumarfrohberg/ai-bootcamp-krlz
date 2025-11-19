@@ -4,8 +4,6 @@ from jaxn import JSONParserHandler
 
 
 class SearchAgentAnswerHandler(JSONParserHandler):
-    """Handler for streaming SearchAgentAnswer JSON that updates Streamlit UI components"""
-
     def __init__(
         self,
         answer_container: object | None = None,
