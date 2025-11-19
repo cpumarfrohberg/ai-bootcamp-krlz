@@ -1,6 +1,3 @@
-# Tool functions for Wikipedia Agent
-"""Wikipedia API tools for searching and retrieving page content"""
-
 import logging
 from typing import List
 from urllib.parse import quote
@@ -55,6 +52,7 @@ def wikipedia_search(query: str) -> List[WikipediaSearchResult]:
         RuntimeError: If the API request fails or returns invalid data
     """
     _validate_search_query(query)
+    logger.info(f"Searching Wikipedia for: {query}")
 
     try:
         search_query = query.replace(" ", "+")
@@ -88,6 +86,7 @@ def wikipedia_search(query: str) -> List[WikipediaSearchResult]:
                     logger.warning(f"Skipping invalid search result: {e}")
                     continue
 
+        logger.info(f"Found {len(search_results)} Wikipedia page(s) for: {query}")
         return search_results
 
     except ValueError:
@@ -124,6 +123,7 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
         RuntimeError: If network error or HTTP error other than 404 occurs
     """
     _validate_page_title(title)
+    logger.info(f"Retrieving Wikipedia page: {title}")
     page_title = title.replace(" ", "_")
 
     try:
@@ -150,11 +150,13 @@ def wikipedia_get_page(title: str) -> WikipediaPageContent:
         wikipedia_url = f"https://en.wikipedia.org/wiki/{page_title}"
 
         # Let Pydantic validate the response data
-        return WikipediaPageContent(
+        page_content = WikipediaPageContent(
             title=title,
             content=content,
             url=wikipedia_url,
         )
+        logger.info(f"Successfully retrieved page: {title} ({len(content)} chars)")
+        return page_content
 
     except ValueError:
         raise
