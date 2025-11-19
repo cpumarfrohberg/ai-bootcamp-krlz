@@ -1,8 +1,5 @@
-# Pydantic models for RAG Agent
-
 from pydantic import BaseModel, Field
 
-# Constants for validation
 MIN_CONFIDENCE_SCORE = 0.0
 MAX_CONFIDENCE_SCORE = 1.0
 MIN_TOKEN_COUNT = 0

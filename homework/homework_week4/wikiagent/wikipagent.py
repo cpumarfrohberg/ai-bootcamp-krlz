@@ -1,7 +1,6 @@
-"""Wikipedia agent for answering questions using Wikipedia content"""
-
 import json
 import logging
+from collections.abc import Coroutine
 from typing import Any, Callable, List
 
 from pydantic_ai import Agent, ModelSettings
@@ -11,7 +10,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 from config import DEFAULT_MAX_TOKENS, DEFAULT_SEARCH_MODE, OPENAI_RAG_MODEL, SearchMode
 from config.adaptive_instructions import get_wikipedia_agent_instructions
-from wikiagent.config import MAX_QUESTION_LOG_LENGTH
+from wikiagent.config import ERROR_MAPPINGS, MAX_QUESTION_LOG_LENGTH, ErrorCategory
 from wikiagent.models import (
     AgentError,
     SearchAgentAnswer,
@@ -22,57 +21,48 @@ from wikiagent.tools import wikipedia_get_page, wikipedia_search
 
 logger = logging.getLogger(__name__)
 
-# Constants
 QUERY_DISPLAY_LENGTH = 50
 STREAM_DEBOUNCE = 0.01
+STRUCTURED_OUTPUT_FIELDS = ["answer", "confidence", "sources_used", "reasoning"]
 
-_tool_calls: List[dict] = []
 
-
-async def track_tool_calls(ctx: Any, event: Any) -> None:
-    """Event handler to track all tool calls"""
-    global _tool_calls
-
-    # Handle nested async streams
-    if hasattr(event, "__aiter__"):
-        async for sub in event:
-            await track_tool_calls(ctx, sub)
-        return
-
-    # Track function tool calls
-    if isinstance(event, FunctionToolCallEvent):
-        tool_call = {
-            "tool_name": event.part.tool_name,
-            "args": event.part.args,
-        }
-        _tool_calls.append(tool_call)
-        tool_num = len(_tool_calls)
-
-        # Parse args to extract query for display
-        try:
-            args_dict = (
-                json.loads(event.part.args)
-                if isinstance(event.part.args, str)
-                else event.part.args
-            )
-            query = (
-                args_dict.get("query", "N/A")[:QUERY_DISPLAY_LENGTH]
-                if isinstance(args_dict, dict)
-                else str(event.part.args)[:QUERY_DISPLAY_LENGTH]
-            )
-        except (json.JSONDecodeError, AttributeError, TypeError):
-            query = (
-                str(event.part.args)[:QUERY_DISPLAY_LENGTH]
-                if event.part.args
-                else "N/A"
-            )
-
-        print(
-            f"🔍 Tool call #{tool_num}: {event.part.tool_name} with query: {query}..."
+def _parse_tool_args(args: Any, max_length: int = QUERY_DISPLAY_LENGTH) -> str:
+    """Extract query from tool args for display purposes"""
+    try:
+        args_dict = json.loads(args) if isinstance(args, str) else args
+        query = (
+            args_dict.get("query", "N/A")[:max_length]
+            if isinstance(args_dict, dict)
+            else str(args)[:max_length]
         )
-        logger.info(
-            f"Tool Call #{tool_num}: {event.part.tool_name} with args: {event.part.args}"
-        )
+    except (json.JSONDecodeError, AttributeError, TypeError):
+        query = str(args)[:max_length] if args else "N/A"
+    return query
+
+
+def _create_tool_call_tracker(
+    tool_calls: List[dict],
+) -> Callable[[Any, Any], Coroutine[Any, Any, None]]:
+    """Create a tool call tracker function that appends to the provided list"""
+
+    async def track_tool_calls(ctx: Any, event: Any) -> None:
+        if hasattr(event, "__aiter__"):
+            async for sub in event:
+                await track_tool_calls(ctx, sub)
+            return
+
+        if isinstance(event, FunctionToolCallEvent):
+            tool_call = {
+                "tool_name": event.part.tool_name,
+                "args": event.part.args,
+            }
+            tool_calls.append(tool_call)
+            query = _parse_tool_args(event.part.args)
+            logger.info(
+                f"Tool Call #{len(tool_calls)}: {event.part.tool_name} with query: {query}..."
+            )
+
+    return track_tool_calls
 
 
 def _create_agent(openai_model: str, search_mode: SearchMode) -> Agent:
@@ -90,44 +80,42 @@ def _create_agent(openai_model: str, search_mode: SearchMode) -> Agent:
     )
 
 
-def _handle_error(e: Exception) -> WikipediaAgentResponse:
+def _handle_error(e: Exception, tool_calls: List[dict]) -> WikipediaAgentResponse:
     """Convert exception to structured error response"""
     logger.error(f"Error during agent execution: {e}")
     error_type = type(e).__name__
-    error_msg = str(e)
+    error_msg = str(e).lower()
+    error_type_lower = error_type.lower()
 
-    if "Wikipedia" in error_msg or "HTTP" in error_msg:
+    # Find matching error category
+    error_config = None
+    for category in ErrorCategory:
+        mapping = ERROR_MAPPINGS[category]
+        keywords = mapping.get("keywords", [])
+        matches_error_msg = any(kw in error_msg for kw in keywords)
+        matches_error_type = any(kw in error_type_lower for kw in keywords)
+        if matches_error_msg or matches_error_type:
+            error_config = mapping
+            break
+
+    if error_config:
         agent_error = AgentError(
-            error_type="WikipediaAPI",
-            message="Wikipedia API error. The page may not exist or the service is temporarily unavailable.",
-            suggestion="Try rephrasing your question or asking about a different topic.",
-            technical_details=error_msg,
-        )
-    elif "Connection" in error_type or "connection" in error_msg.lower():
-        agent_error = AgentError(
-            error_type="Network",
-            message="Connection error. Please check your internet connection.",
-            suggestion="The Wikipedia API could not be reached. Please try again in a moment.",
-            technical_details=error_msg,
-        )
-    elif "Timeout" in error_type or "timeout" in error_msg.lower():
-        agent_error = AgentError(
-            error_type="Timeout",
-            message="Request timed out. The Wikipedia API took too long to respond.",
-            suggestion="Please try again with a simpler question or check your connection.",
-            technical_details=error_msg,
+            error_type=error_config["error_type"],
+            message=error_config["message"],
+            suggestion=error_config["suggestion"],
+            technical_details=str(e),
         )
     else:
         agent_error = AgentError(
             error_type=error_type,
             message=f"An error occurred: {error_type}",
             suggestion="Please try again. If the problem persists, check your internet connection and API configuration.",
-            technical_details=error_msg,
+            technical_details=str(e),
         )
 
     return WikipediaAgentResponse(
         answer=None,
-        tool_calls=_tool_calls,
+        tool_calls=tool_calls,
         usage=None,
         error=agent_error,
     )
@@ -141,47 +129,75 @@ def _extract_token_usage(usage_obj: Any) -> TokenUsage:
     )
 
 
+def _is_structured_output(args_str: str) -> bool:
+    """Check if args contain structured output fields"""
+    return any(field in args_str.lower() for field in STRUCTURED_OUTPUT_FIELDS)
+
+
+def _calculate_delta(current_text: str, previous_text: str) -> str:
+    """Calculate delta between current and previous text"""
+    return current_text[len(previous_text) :]
+
+
+def _process_streaming_part(
+    part: Any,
+    tool_call_callback: Callable[[str, str], None] | None,
+    structured_output_callback: Callable[[str], None] | None,
+    previous_text: str,
+) -> tuple[str, bool]:
+    """
+    Process a single streaming part.
+    Returns: (updated_previous_text, handled)
+    """
+    if not hasattr(part, "tool_name"):
+        return previous_text, False
+
+    tool_name = part.tool_name
+    args = part.args
+
+    # Handle Wikipedia tool calls
+    if tool_name in {"wikipedia_search", "wikipedia_get_page"}:
+        if tool_call_callback:
+            tool_call_callback(tool_name, args)
+        return previous_text, True
+
+    # Handle structured output
+    if tool_name and args:
+        args_str = args if isinstance(args, str) else json.dumps(args)
+        if _is_structured_output(args_str):
+            delta = _calculate_delta(args_str, previous_text)
+            if structured_output_callback and delta:
+                structured_output_callback(delta)
+            return args_str, True
+
+    return previous_text, False
+
+
 async def query_wikipedia(
     question: str,
     openai_model: str = OPENAI_RAG_MODEL,
     search_mode: SearchMode = DEFAULT_SEARCH_MODE,
+    agent: Agent | None = None,
 ) -> WikipediaAgentResponse:
-    """
-    Query Wikipedia using the agent with search and get_page tools.
-
-    The agent will:
-    1. Use wikipedia_search to find relevant pages
-    2. Use wikipedia_get_page to retrieve full content
-    3. Answer the question based on retrieved content
-
-    Args:
-        question: User question to answer
-        openai_model: OpenAI model name (default: from config)
-        search_mode: Search mode (EVALUATION, PRODUCTION, or RESEARCH)
-                     Default: EVALUATION (strict minimums for consistent testing)
-
-    Returns:
-        WikipediaAgentResponse with answer and tool calls
-    """
-    global _tool_calls
-    _tool_calls = []
-    agent = _create_agent(openai_model, search_mode)
+    """Query Wikipedia using the agent with search and get_page tools."""
+    tool_calls: List[dict] = []
+    if agent is None:
+        agent = _create_agent(openai_model, search_mode)
     logger.info(
         f"Running Wikipedia agent query: {question[:MAX_QUESTION_LOG_LENGTH]}..."
     )
-    print("🤖 Wikipedia Agent is processing your question...")
 
     try:
-        result = await agent.run(question, event_stream_handler=track_tool_calls)
+        track_handler = _create_tool_call_tracker(tool_calls)
+        result = await agent.run(question, event_stream_handler=track_handler)
     except Exception as e:
-        return _handle_error(e)
+        return _handle_error(e, tool_calls)
 
-    logger.info(f"Agent completed query. Tool calls: {len(_tool_calls)}")
-    print(f"✅ Agent completed query. Made {len(_tool_calls)} tool calls.")
+    logger.info(f"Agent completed query. Tool calls: {len(tool_calls)}")
     usage = _extract_token_usage(result.usage())
     return WikipediaAgentResponse(
         answer=result.output,
-        tool_calls=_tool_calls,
+        tool_calls=tool_calls,
         usage=usage,
     )
 
@@ -192,74 +208,39 @@ async def query_wikipedia_stream(
     search_mode: SearchMode = DEFAULT_SEARCH_MODE,
     tool_call_callback: Callable[[str, str], None] | None = None,
     structured_output_callback: Callable[[str], None] | None = None,
+    agent: Agent | None = None,
 ) -> WikipediaAgentResponse:
-    """
-    Query Wikipedia using the agent with streaming support.
-
-    This function streams the agent's response, allowing real-time updates
-    of tool calls and structured output as they arrive.
-
-    Args:
-        question: User question to answer
-        openai_model: OpenAI model name (default: from config)
-        search_mode: Search mode (EVALUATION, PRODUCTION, or RESEARCH)
-        tool_call_callback: Optional callback for tool calls (tool_name, args)
-        structured_output_callback: Optional callback for structured output JSON deltas
-
-    Returns:
-        WikipediaAgentResponse with answer and tool calls
-    """
-    global _tool_calls
-    _tool_calls = []
-    agent = _create_agent(openai_model, search_mode)
+    """Query Wikipedia using the agent with streaming support for real-time updates."""
+    tool_calls: List[dict] = []
+    if agent is None:
+        agent = _create_agent(openai_model, search_mode)
     logger.info(
         f"Running Wikipedia agent query with streaming: {question[:MAX_QUESTION_LOG_LENGTH]}..."
     )
     previous_text = ""
 
     try:
+        track_handler = _create_tool_call_tracker(tool_calls)
         async with agent.run_stream(
-            question, event_stream_handler=track_tool_calls
+            question, event_stream_handler=track_handler
         ) as result:
             async for item, last in result.stream_responses(
                 debounce_by=STREAM_DEBOUNCE
             ):
                 for part in item.parts:
-                    if not hasattr(part, "tool_name"):
-                        continue
-
-                    tool_name = part.tool_name
-                    args = part.args
-
-                    if tool_name in {"wikipedia_search", "wikipedia_get_page"}:
-                        if tool_call_callback:
-                            tool_call_callback(tool_name, args)
-                        continue
-
-                    if tool_name and args:
-                        args_str = args if isinstance(args, str) else json.dumps(args)
-                        is_structured_output = any(
-                            field in args_str.lower()
-                            for field in [
-                                "answer",
-                                "confidence",
-                                "sources_used",
-                                "reasoning",
-                            ]
-                        )
-
-                        if is_structured_output:
-                            delta = args_str[len(previous_text) :]
-                            previous_text = args_str
-                            if structured_output_callback and delta:
-                                structured_output_callback(delta)
+                    previous_text, _ = _process_streaming_part(
+                        part,
+                        tool_call_callback,
+                        structured_output_callback,
+                        previous_text,
+                    )
 
             final_output = await result.get_output()
             usage = _extract_token_usage(result.usage())
             return WikipediaAgentResponse(
                 answer=final_output,
-                tool_calls=_tool_calls,
+                tool_calls=tool_calls,
                 usage=usage,
             )
     except Exception as e:
-        return _handle_error(e)
+        return _handle_error(e, tool_calls)

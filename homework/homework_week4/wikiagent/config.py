@@ -1,6 +1,15 @@
-"""Wikipedia Agent configuration constants"""
+from enum import StrEnum
 
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
+
+
+class ErrorCategory(StrEnum):
+    """Error categories for agent error handling"""
+
+    WIKIPEDIA = "wikipedia"
+    CONNECTION = "connection"
+    TIMEOUT = "timeout"
+
 
 # Maximum page content length to prevent context overflow
 # Truncate Wikipedia page content to this length (characters)
@@ -39,3 +48,31 @@ MIN_REASONING_LENGTH = 1
 
 # Logging constants
 MAX_QUESTION_LOG_LENGTH = 100  # Max length for question in logs
+
+# Validation constants
+MIN_QUERY_LENGTH = 1
+MAX_QUERY_LENGTH = 300
+MIN_TITLE_LENGTH = 1
+MAX_TITLE_LENGTH = 255
+
+# Error mappings for agent error handling
+ERROR_MAPPINGS = {
+    ErrorCategory.WIKIPEDIA: {
+        "error_type": "WikipediaAPI",
+        "message": "Wikipedia API error. The page may not exist or the service is temporarily unavailable.",
+        "suggestion": "Try rephrasing your question or asking about a different topic.",
+        "keywords": ["wikipedia", "http"],
+    },
+    ErrorCategory.CONNECTION: {
+        "error_type": "Network",
+        "message": "Connection error. Please check your internet connection.",
+        "suggestion": "The Wikipedia API could not be reached. Please try again in a moment.",
+        "keywords": ["connection"],
+    },
+    ErrorCategory.TIMEOUT: {
+        "error_type": "Timeout",
+        "message": "Request timed out. The Wikipedia API took too long to respond.",
+        "suggestion": "Please try again with a simpler question or check your connection.",
+        "keywords": ["timeout"],
+    },
+}

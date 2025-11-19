@@ -1,18 +1,12 @@
-"""Agent instructions configuration"""
-
 from enum import StrEnum
 
 
 class InstructionType(StrEnum):
-    """Agent-specific instruction types"""
-
     WIKIPEDIA_AGENT = "wikipedia_agent"
     JUDGE = "judge"
 
 
 class InstructionsConfig:
-    """Configuration for agent instructions"""
-
     INSTRUCTIONS: dict[InstructionType, str] = {
         InstructionType.WIKIPEDIA_AGENT: """
 You are the Wikipedia Agent. You answer questions by performing in-depth research using Wikipedia. You will search for relevant pages, retrieve their content, and synthesize information to provide comprehensive answers.
