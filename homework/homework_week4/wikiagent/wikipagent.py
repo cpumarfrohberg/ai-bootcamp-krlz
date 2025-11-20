@@ -241,7 +241,7 @@ async def query_wikipedia_stream(
             final_output = await result.get_output()
             usage = _extract_token_usage(result.usage())
             logger.info(
-                f"Token usage - Input: {usage.input_tokens}, Output: {usage.output_tokens}, Total: {usage.total_tokens}"
+                f"📊 Token Usage - Input: {usage.input_tokens:,}, Output: {usage.output_tokens:,}, Total: {usage.total_tokens:,}"
             )
             return WikipediaAgentResponse(
                 answer=final_output,
