@@ -1,13 +1,21 @@
 import asyncio
 import json
+import logging
 from typing import Any
 
 import streamlit as st
 from jaxn import StreamingJSONParser
 
-from config import DEFAULT_SEARCH_MODE, SearchMode
+from config import DEFAULT_SEARCH_MODE, LOG_LEVEL, SearchMode
 from wikiagent.stream_handler import SearchAgentAnswerHandler
 from wikiagent.wikipagent import query_wikipedia_stream
+
+# Configure logging to display in terminal
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+)
 
 QUERY_TRUNCATION_LENGTH = 50
 MAX_QUESTION_LENGTH = 500
