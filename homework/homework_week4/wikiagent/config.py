@@ -1,6 +1,9 @@
+import os
 from enum import StrEnum
 
 USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agent)"
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 class ErrorCategory(StrEnum):
