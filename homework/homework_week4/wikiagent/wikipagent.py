@@ -24,9 +24,10 @@ except ImportError:
 
 # Import guardrail functions (lazy import to avoid circular dependencies)
 try:
-    from wikiagent.guardrails import check_query_guardrail
+    from wikiagent.guardrails import check_capybara_guardrail, check_query_guardrail
 except ImportError:
     check_query_guardrail = None
+    check_capybara_guardrail = None
     logger.warning("guardrails module not available, guardrails will be skipped")
 
 QUERY_DISPLAY_LENGTH = 50
@@ -173,7 +174,13 @@ async def query_wikipedia_stream(
         f"Running Wikipedia agent query with streaming: {question[:MAX_QUESTION_LOG_LENGTH]}..."
     )
 
-    # Check query guardrail first
+    # Check capybara guardrail first
+    if check_capybara_guardrail:
+        guardrail_error = await check_capybara_guardrail(question)
+        if guardrail_error:
+            return guardrail_error
+
+    # Check query guardrail
     if check_query_guardrail:
         from wikiagent.config import GUARDRAIL_BLOCKED_KEYWORDS
 

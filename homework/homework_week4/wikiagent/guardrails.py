@@ -154,3 +154,42 @@ async def check_query_guardrail(
                 technical_details=str(e),
             ),
         )
+
+
+async def check_capybara_guardrail(question: str) -> Any | None:
+    """
+    Check if question is about capybaras.
+
+    Only allows questions that mention capybaras. Blocks all other questions.
+
+    Args:
+        question: User's question to check
+
+    Returns:
+        Error response if question is NOT about capybaras, None otherwise
+    """
+    capybara_keywords = ["capybara", "capybaras"]
+    question_lower = question.lower()
+
+    is_about_capybara = any(keyword in question_lower for keyword in capybara_keywords)
+
+    if not is_about_capybara:
+        logger.warning(
+            "🚫 Capybara guardrail triggered: Question is not about capybaras"
+        )
+
+        # Import here to avoid circular dependencies
+        from wikiagent.models import AgentError, WikipediaAgentResponse
+
+        return WikipediaAgentResponse(
+            answer=None,
+            tool_calls=[],
+            usage=None,
+            error=AgentError(
+                error_type="Guardrail",
+                message="This agent only answers questions about capybaras.",
+                suggestion="Please ask a question about capybaras.",
+            ),
+        )
+
+    return None
