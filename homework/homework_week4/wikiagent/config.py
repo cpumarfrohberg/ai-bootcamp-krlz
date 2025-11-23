@@ -6,7 +6,6 @@ USER_AGENT = "WikipediaAgent/1.0 (https://github.com/yourusername/wikipedia-agen
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Guardrail configuration
-GUARDRAIL_MAX_COST = float(os.getenv("GUARDRAIL_MAX_COST", "1.0"))
 GUARDRAIL_BLOCKED_KEYWORDS = [
     kw.strip()
     for kw in os.getenv("GUARDRAIL_BLOCKED_KEYWORDS", "").split(",")
