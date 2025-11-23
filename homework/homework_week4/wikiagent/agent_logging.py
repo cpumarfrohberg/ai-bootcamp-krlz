@@ -174,13 +174,20 @@ async def save_log_to_db(
             usage.output_tokens,
         )
 
+        # Convert system_prompt to string if it's a list
+        instructions_text = log_entry["system_prompt"]
+        if isinstance(instructions_text, list):
+            instructions_text = "\n".join(str(item) for item in instructions_text)
+        elif instructions_text is not None:
+            instructions_text = str(instructions_text)
+
         # Validate data before database operation
         log_data = LogCreate(
             agent_name=log_entry["agent_name"],
             provider=log_entry["provider"],
             model=log_entry["model"],
             user_prompt=question,
-            instructions=log_entry["system_prompt"],
+            instructions=instructions_text,
             total_input_tokens=usage.input_tokens,
             total_output_tokens=usage.output_tokens,
             assistant_answer=answer_text,
