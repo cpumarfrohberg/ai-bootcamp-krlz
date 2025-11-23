@@ -203,3 +203,34 @@ async def save_log_to_db(
     except Exception as e:
         logger.error(f"Failed to save log to database: {e}", exc_info=True)
         return None
+
+
+async def log_agent_run(
+    agent: Agent,
+    result: StreamedRunResult,
+    question: str,
+) -> int | None:
+    """
+    Log agent run to database with error handling.
+
+    This is a public wrapper around save_log_to_db that provides
+    consistent error handling and logging.
+
+    Args:
+        agent: The agent instance
+        result: Streamed run result
+        question: The user's question
+
+    Returns:
+        Log ID if successful, None otherwise
+    """
+    try:
+        log_id = await save_log_to_db(agent, result, question)
+        if log_id:
+            logger.info(f"✅ Log saved to database with ID: {log_id}")
+        else:
+            logger.warning("⚠️ Failed to save log to database (log_id is None)")
+        return log_id
+    except Exception as e:
+        logger.error(f"❌ Error saving log to database: {e}", exc_info=True)
+        return None

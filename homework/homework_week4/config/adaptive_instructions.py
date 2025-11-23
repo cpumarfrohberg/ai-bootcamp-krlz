@@ -22,11 +22,11 @@ Phase 1 - Exploration:
    - Start with a broad query using key terms from the question to understand the overall topic
    - Identify major themes and related topics from the search results
    - Use general searches to map out the content structure and identify relevant Wikipedia pages
-   - Example: If asked about "factors influencing customer behavior", start with "customer behavior" to find the main page and related topics
+   - Example: If asked about "where do capybaras live", start with "capybara" to find the main page and related topics
 
 Phase 2 - Deep retrieval:
    - For each major topic identified in phase 1, perform focused searches with specific queries
-   - Examples: "factors influencing customer behavior", "customer behavior determinants", "consumer behavior psychology"
+   - Examples: "capybara habitat", "capybara distribution", "capybara range"
    - Search for related pages that cover different aspects of the topic
    - IMPORTANT: Prioritize doing more searches over retrieving more pages
    - After each search, select only the 1-2 most relevant pages to retrieve (not all pages from search results)
@@ -40,7 +40,7 @@ Phase 3 - Synthesis:
    - If information is not available in Wikipedia, clearly state that
 
 SEARCH STRATEGY:
-   - Use specific, targeted queries (e.g., "customer behavior", "factors influencing behavior", "consumer psychology")
+   - Use specific, targeted queries (e.g., "capybara", "capybara habitat", "capybara distribution")
    - Focus on finding pages that cover different aspects of the topic
    - Each search should help build a comprehensive understanding
    - If a search doesn't return relevant results, try alternative search terms or synonyms
@@ -61,15 +61,15 @@ CRITICAL: You MUST return ONLY a valid JSON object. Do NOT include any explanato
 - The JSON must contain these exact fields:
   - "answer": A string response based on Wikipedia content
   - "confidence": A float between 0.0 and 1.0 (0.0 to 1.0)
-  - "sources_used": A list of Wikipedia page titles used (e.g., ["Consumer behaviour", "Customer satisfaction", "Behavioral economics"])
+  - "sources_used": A list of Wikipedia page titles used (e.g., ["Capybara", "South America", "Rodent"])
   - "reasoning": Brief explanation (optional string or null)
 
 Example - return ONLY this (no text before or after):
 {{
-  "answer": "Customer behavior is influenced by multiple factors including psychological factors (motivation, perception, learning, attitudes), social factors (family, reference groups, culture), personal factors (age, lifestyle, economic situation), and marketing factors (product, price, promotion, place). Understanding these factors helps predict and influence customer decisions.",
+  "answer": "Capybaras live in South America, primarily in countries like Brazil, Venezuela, Colombia, and Argentina. They inhabit areas near water such as rivers, lakes, swamps, and marshes, as they are semi-aquatic animals that need water for both drinking and protection from predators.",
   "confidence": 0.95,
-  "sources_used": ["Consumer behaviour", "Behavioral economics"],
-  "reasoning": "Found relevant Wikipedia pages on factors influencing customer behavior"
+  "sources_used": ["Capybara", "South America", "Rodent"],
+  "reasoning": "Found relevant Wikipedia pages on capybara habitat and distribution"
 }}
 
 IMPORTANT: Your entire response must be ONLY the JSON object. No introductory text, no explanations, no markdown formatting. Just the raw JSON.

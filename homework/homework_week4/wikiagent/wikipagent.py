@@ -3,23 +3,31 @@ import logging
 from collections.abc import Coroutine
 from typing import Any, Callable, List
 
-from pydantic_ai import Agent, ModelSettings
+from pydantic_ai import Agent
 from pydantic_ai.messages import FunctionToolCallEvent
-from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.providers.openai import OpenAIProvider
 
-from config import DEFAULT_MAX_TOKENS, DEFAULT_SEARCH_MODE, OPENAI_RAG_MODEL, SearchMode
-from config.adaptive_instructions import get_wikipedia_agent_instructions
-from wikiagent.config import ERROR_MAPPINGS, MAX_QUESTION_LOG_LENGTH, ErrorCategory
-from wikiagent.models import (
-    AgentError,
-    SearchAgentAnswer,
-    TokenUsage,
-    WikipediaAgentResponse,
-)
+from config import DEFAULT_SEARCH_MODE, OPENAI_RAG_MODEL, SearchMode
+from wikiagent.config import MAX_QUESTION_LOG_LENGTH
+from wikiagent.create_agent import create_wikipedia_agent
+from wikiagent.error_handler import handle_agent_error
+from wikiagent.models import TokenUsage, WikipediaAgentResponse
 from wikiagent.tools import wikipedia_get_page, wikipedia_search
 
 logger = logging.getLogger(__name__)
+
+# Import logging function (lazy import to avoid circular dependencies)
+try:
+    from wikiagent.agent_logging import log_agent_run
+except ImportError:
+    log_agent_run = None
+    logger.warning("agent_logging module not available, logging will be skipped")
+
+# Import guardrail functions (lazy import to avoid circular dependencies)
+try:
+    from wikiagent.guardrails import check_query_guardrail
+except ImportError:
+    check_query_guardrail = None
+    logger.warning("guardrails module not available, guardrails will be skipped")
 
 QUERY_DISPLAY_LENGTH = 50
 STREAM_DEBOUNCE = 0.01
@@ -63,62 +71,6 @@ def _create_tool_call_tracker(
             )
 
     return track_tool_calls
-
-
-def _create_agent(openai_model: str, search_mode: SearchMode) -> Agent:
-    instructions = get_wikipedia_agent_instructions(search_mode)
-    model = OpenAIChatModel(model_name=openai_model, provider=OpenAIProvider())
-    logger.info(f"Using OpenAI model: {openai_model}, search mode: {search_mode}")
-    return Agent(
-        name="wikipedia_agent",
-        model=model,
-        tools=[wikipedia_search, wikipedia_get_page],
-        instructions=instructions,
-        output_type=SearchAgentAnswer,
-        model_settings=ModelSettings(max_tokens=DEFAULT_MAX_TOKENS),
-        end_strategy="exhaustive",
-    )
-
-
-def _handle_error(e: Exception, tool_calls: List[dict]) -> WikipediaAgentResponse:
-    """Convert exception to structured error response"""
-    logger.error(f"Error during agent execution: {e}")
-    error_type = type(e).__name__
-    error_msg = str(e).lower()
-    error_type_lower = error_type.lower()
-
-    # Find matching error category
-    error_config = None
-    for category in ErrorCategory:
-        mapping = ERROR_MAPPINGS[category]
-        keywords = mapping.get("keywords", [])
-        matches_error_msg = any(kw in error_msg for kw in keywords)
-        matches_error_type = any(kw in error_type_lower for kw in keywords)
-        if matches_error_msg or matches_error_type:
-            error_config = mapping
-            break
-
-    if error_config:
-        agent_error = AgentError(
-            error_type=error_config["error_type"],
-            message=error_config["message"],
-            suggestion=error_config["suggestion"],
-            technical_details=str(e),
-        )
-    else:
-        agent_error = AgentError(
-            error_type=error_type,
-            message=f"An error occurred: {error_type}",
-            suggestion="Please try again. If the problem persists, check your internet connection and API configuration.",
-            technical_details=str(e),
-        )
-
-    return WikipediaAgentResponse(
-        answer=None,
-        tool_calls=tool_calls,
-        usage=None,
-        error=agent_error,
-    )
 
 
 def _extract_token_usage(usage_obj: Any) -> TokenUsage:
@@ -182,7 +134,7 @@ async def query_wikipedia(
     """Query Wikipedia using the agent with search and get_page tools."""
     tool_calls: List[dict] = []
     if agent is None:
-        agent = _create_agent(openai_model, search_mode)
+        agent = create_wikipedia_agent(openai_model, search_mode)
     logger.info(
         f"Running Wikipedia agent query: {question[:MAX_QUESTION_LOG_LENGTH]}..."
     )
@@ -191,7 +143,7 @@ async def query_wikipedia(
         track_handler = _create_tool_call_tracker(tool_calls)
         result = await agent.run(question, event_stream_handler=track_handler)
     except Exception as e:
-        return _handle_error(e, tool_calls)
+        return handle_agent_error(e, tool_calls)
 
     logger.info(f"Agent completed query. Tool calls: {len(tool_calls)}")
     usage = _extract_token_usage(result.usage())
@@ -216,17 +168,31 @@ async def query_wikipedia_stream(
     """Query Wikipedia using the agent with streaming support for real-time updates."""
     tool_calls: List[dict] = []
     if agent is None:
-        agent = _create_agent(openai_model, search_mode)
+        agent = create_wikipedia_agent(openai_model, search_mode)
     logger.info(
         f"Running Wikipedia agent query with streaming: {question[:MAX_QUESTION_LOG_LENGTH]}..."
     )
+
+    # Check query guardrail first
+    if check_query_guardrail:
+        from wikiagent.config import GUARDRAIL_BLOCKED_KEYWORDS
+
+        guardrail_error = await check_query_guardrail(
+            question, GUARDRAIL_BLOCKED_KEYWORDS
+        )
+        if guardrail_error:
+            return guardrail_error
+
     previous_text = ""
+    result: Any = None
+    final_output: Any = None
 
     try:
         track_handler = _create_tool_call_tracker(tool_calls)
         async with agent.run_stream(
             question, event_stream_handler=track_handler
-        ) as result:
+        ) as stream_result:
+            result = stream_result
             async for item, last in result.stream_responses(
                 debounce_by=STREAM_DEBOUNCE
             ):
@@ -237,16 +203,21 @@ async def query_wikipedia_stream(
                         structured_output_callback,
                         previous_text,
                     )
-
             final_output = await result.get_output()
-            usage = _extract_token_usage(result.usage())
-            logger.info(
-                f"📊 Token Usage - Input: {usage.input_tokens:,}, Output: {usage.output_tokens:,}, Total: {usage.total_tokens:,}"
-            )
-            return WikipediaAgentResponse(
-                answer=final_output,
-                tool_calls=tool_calls,
-                usage=usage,
-            )
+
+        usage = _extract_token_usage(result.usage())
+        logger.info(
+            f"📊 Token Usage - Input: {usage.input_tokens:,}, Output: {usage.output_tokens:,}, Total: {usage.total_tokens:,}"
+        )
+
+        # Save log to database
+        if log_agent_run:
+            await log_agent_run(agent, result, question)
+
+        return WikipediaAgentResponse(
+            answer=final_output,
+            tool_calls=tool_calls,
+            usage=usage,
+        )
     except Exception as e:
-        return _handle_error(e, tool_calls)
+        return handle_agent_error(e, tool_calls)

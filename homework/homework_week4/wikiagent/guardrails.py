@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -117,3 +118,39 @@ async def run_with_guardrails(
         await asyncio.gather(*guardrail_tasks, return_exceptions=True)
 
         raise
+
+
+async def check_query_guardrail(
+    question: str,
+    blocked_keywords: list[str],
+) -> Any | None:
+    """
+    Check query guardrail before agent execution.
+
+    Args:
+        question: User's question to check
+        blocked_keywords: List of keywords to block
+
+    Returns:
+        Error response if guardrail triggered, None otherwise
+    """
+    try:
+        await query_guardrail(question, blocked_keywords)
+        return None
+    except GuardrailException as e:
+        logger.warning(f"🚫 Query guardrail triggered: {e.info.output_info}")
+
+        # Import here to avoid circular dependencies
+        from wikiagent.models import AgentError, WikipediaAgentResponse
+
+        return WikipediaAgentResponse(
+            answer=None,
+            tool_calls=[],
+            usage=None,
+            error=AgentError(
+                error_type="Guardrail",
+                message=f"Query blocked: {e.info.output_info}",
+                suggestion="Please rephrase your question.",
+                technical_details=str(e),
+            ),
+        )
