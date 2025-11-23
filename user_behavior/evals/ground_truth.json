@@ -1,0 +1,302 @@
+[
+  {
+    "question": "What is better than top-posting and bottom-posting?",
+    "expected_sources": [
+      "question_37818"
+    ]
+  },
+  {
+    "question": "Solutions for dealing with really bad user entering wrong data?",
+    "expected_sources": [
+      "question_2324"
+    ]
+  },
+  {
+    "question": "What are the pros and cons of skeuomorphic design in payment transactions?",
+    "expected_sources": [
+      "question_33411"
+    ]
+  },
+  {
+    "question": "Are websites and interactions designed to build or skip levels of trust?",
+    "expected_sources": [
+      "question_91353"
+    ]
+  },
+  {
+    "question": "How do you give your user options without overloading them?",
+    "expected_sources": [
+      "question_35936"
+    ]
+  },
+  {
+    "question": "Consistent UI experience",
+    "expected_sources": [
+      "question_6576"
+    ]
+  },
+  {
+    "question": "Usability and security for user access and password handling in a web application?",
+    "expected_sources": [
+      "question_1986"
+    ]
+  },
+  {
+    "question": "What&#39;s a UX-friendly way to inconvenience a user into action e.g. prompt for payment",
+    "expected_sources": [
+      "question_94391"
+    ]
+  },
+  {
+    "question": "Keyboard shortcut keys for Tabs?",
+    "expected_sources": [
+      "question_99161"
+    ]
+  },
+  {
+    "question": "&quot;Typocaptcha&quot; - an alternative to CAPTCHA?",
+    "expected_sources": [
+      "question_79329"
+    ]
+  },
+  {
+    "question": "Is my gender selection sexist?",
+    "expected_sources": [
+      "question_90123"
+    ]
+  },
+  {
+    "question": "Making a Streak Visualization More Intuitive",
+    "expected_sources": [
+      "question_76312"
+    ]
+  },
+  {
+    "question": "Best practices for UI that introduces new users",
+    "expected_sources": [
+      "question_53850"
+    ]
+  },
+  {
+    "question": "Save, Favorite or Star?",
+    "expected_sources": [
+      "question_38356"
+    ]
+  },
+  {
+    "question": "Online Store - Should size comes first with color or vice versa?",
+    "expected_sources": [
+      "question_82658"
+    ]
+  },
+  {
+    "question": "What is the best way to inspire users to choose strong password?",
+    "expected_sources": [
+      "question_16433"
+    ]
+  },
+  {
+    "question": "How do I encourage users to supply information that might not be available, if it is available?",
+    "expected_sources": [
+      "question_93243"
+    ]
+  },
+  {
+    "question": "What is the optimal load time for a website before users abandon a mobile application or website?",
+    "expected_sources": [
+      "question_55700"
+    ]
+  },
+  {
+    "question": "Deleting dependent records from a table/list",
+    "expected_sources": [
+      "question_36830"
+    ]
+  },
+  {
+    "question": "Do people actually use tooltips?",
+    "expected_sources": [
+      "question_35468"
+    ]
+  },
+  {
+    "question": "Do users behave differently to interactive lo-fi wireframes compared to hi-fi mockups in user testing sessions",
+    "expected_sources": [
+      "question_101796"
+    ]
+  },
+  {
+    "question": "Why do users click randomly and rapidly when an application hangs?",
+    "expected_sources": [
+      "question_39413"
+    ]
+  },
+  {
+    "question": "Why does the cursor type vary?",
+    "expected_sources": [
+      "question_100130"
+    ]
+  },
+  {
+    "question": "If text is editable, how important is to show it (appearance wise) inside a text box?",
+    "expected_sources": [
+      "question_54572"
+    ]
+  },
+  {
+    "question": "Getting the real name of an user",
+    "expected_sources": [
+      "question_104262"
+    ]
+  },
+  {
+    "question": "When is it better to use &quot;You&quot; versus using the user&#39;s name?",
+    "expected_sources": [
+      "question_82327"
+    ]
+  },
+  {
+    "question": "When offering options, at which position in a sentence should be the desirable one?",
+    "expected_sources": [
+      "question_37760"
+    ]
+  },
+  {
+    "question": "Most useful survey questions for user research?",
+    "expected_sources": [
+      "question_26451"
+    ]
+  },
+  {
+    "question": "Is there research on whether users know how to open a link in a new tab?",
+    "expected_sources": [
+      "question_76179"
+    ]
+  },
+  {
+    "question": "Best way to prevent a user from selecting None/Others before reading all available options",
+    "expected_sources": [
+      "question_107736"
+    ]
+  },
+  {
+    "question": "User behavior that caught you off guard?",
+    "expected_sources": [
+      "question_1719"
+    ]
+  },
+  {
+    "question": "How do users expect dropdown navigation to work?",
+    "expected_sources": [
+      "question_8909"
+    ]
+  },
+  {
+    "question": "How do I measure a user&#39;s seriousness while filling an online form?",
+    "expected_sources": [
+      "question_95137"
+    ]
+  },
+  {
+    "question": "Confusing checkboxes and radio buttons",
+    "expected_sources": [
+      "question_112128"
+    ]
+  },
+  {
+    "question": "How long should a toast message with &#39;undo&#39; appear?",
+    "expected_sources": [
+      "question_116634"
+    ]
+  },
+  {
+    "question": "Deliberately annoying users to discourage certain behaviour. Is this a bad idea?",
+    "expected_sources": [
+      "question_28637"
+    ]
+  },
+  {
+    "question": "Which is easier to use: List of people sorted by FirstName, LastName or LastName, FirstName?",
+    "expected_sources": [
+      "question_36088"
+    ]
+  },
+  {
+    "question": "Is database too technical a term for user?",
+    "expected_sources": [
+      "question_34107"
+    ]
+  },
+  {
+    "question": "How to prevent users using your app while driving?",
+    "expected_sources": [
+      "question_57549"
+    ]
+  },
+  {
+    "question": "Should tabs changes in a web app be part of the browser history?",
+    "expected_sources": [
+      "question_13300"
+    ]
+  },
+  {
+    "question": "Unit of measure and Quantity in Purchase Orders",
+    "expected_sources": [
+      "question_15757"
+    ]
+  },
+  {
+    "question": "Fling cells in table view",
+    "expected_sources": [
+      "question_49505"
+    ]
+  },
+  {
+    "question": "What&#39;s better for invitation emails: a temporary password or a one-time login url?",
+    "expected_sources": [
+      "question_37334"
+    ]
+  },
+  {
+    "question": "Multi shapes buttons damage User Experience / User Interface?",
+    "expected_sources": [
+      "question_76787"
+    ]
+  },
+  {
+    "question": "What is the best way to hide a Honeypot Captcha?",
+    "expected_sources": [
+      "question_52916"
+    ]
+  },
+  {
+    "question": "Is scroll within a card good or bad? (In desktop)",
+    "expected_sources": [
+      "question_102831"
+    ]
+  },
+  {
+    "question": "Should we ask for name on card even though it&#39;s not required for credit card payments?",
+    "expected_sources": [
+      "question_31006"
+    ]
+  },
+  {
+    "question": "How to display gamification progress when 100% completion of a task might not be possible(or desirable in some cases?",
+    "expected_sources": [
+      "question_89723"
+    ]
+  },
+  {
+    "question": "What is the best way to motivate users to participate in completing tedious tasks?",
+    "expected_sources": [
+      "question_22650"
+    ]
+  },
+  {
+    "question": "What is the best way to end a call between two parties (timer involved) in a non-disruptive way?",
+    "expected_sources": [
+      "question_96447"
+    ]
+  }
+]
